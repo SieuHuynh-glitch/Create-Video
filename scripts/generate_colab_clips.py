@@ -61,7 +61,7 @@ def extract_last_frame(clip_path: Path, output_frame_path: Path):
 def main():
     parser = argparse.ArgumentParser(description="Tự động sinh 12 clip AI miễn phí bằng GPU Google Colab")
     parser.add_argument("--run", default="natural-cycle-v2", help="Mã slug dự án")
-    parser.add_argument("--model", default="ltx", choices=["ltx", "cogvideox"], help="Mô hình AI Video (ltx hoặc cogvideox)")
+    parser.add_argument("--model", default="cogvideox", choices=["cogvideox", "ltx"], help="Mô hình AI Video (cogvideox siêu nhẹ 4.9GB hoặc ltx)")
     parser.add_argument("--shot", default=None, help="Chỉ sinh một shot cụ thể (ví dụ: shot_01)")
     parser.add_argument("--num_inference_steps", type=int, default=30, help="Số bước khử nhiễu (Denoising steps)")
     parser.add_argument("--force", action="store_true", help="Ghi đè clip đã tồn tại")
@@ -76,7 +76,7 @@ def main():
 
     print("\n" + "=" * 60)
     print(f"🎬 BẮT ĐẦU PIPELINE TỰ ĐỘNG SINH CLIP AI TRÊN GOOGLE COLAB (0đ)")
-    print(f"   Dự án: {args.run} | Mô hình: {args.model.upper()}")
+    print(f"   Dự án: {args.run} | Mô hình: {args.model.upper()} (Tối ưu RAM 12.7GB)")
     print("=" * 60 + "\n")
 
     # 1. Kiểm tra PyTorch và GPU
@@ -87,13 +87,25 @@ def main():
 
     gpu_name = torch.cuda.get_device_name(0)
     print(f"✅ Phát hiện GPU: {gpu_name}")
-    dtype = torch.bfloat16 if torch.cuda.is_bf16_supported() else torch.float16
+    dtype = torch.float16
     print(f"⚡ Kiểu dữ liệu tối ưu: {dtype}\n")
 
     # 2. Tải Pipeline mô hình vào GPU VRAM (Tránh ngốn System RAM gây OOM)
     from diffusers.utils import export_to_video, load_image
 
-    if args.model == "ltx":
+    if args.model == "cogvideox":
+        from diffusers import CogVideoXImageToVideoPipeline
+        print("⏳ Đang tải mô hình THUDM/CogVideoX-2b (Siêu nhẹ 4.9GB - An toàn tuyệt đối cho Colab Free)...")
+        pipe = CogVideoXImageToVideoPipeline.from_pretrained(
+            "THUDM/CogVideoX-2b",
+            torch_dtype=torch.float16,
+            low_cpu_mem_usage=True,
+        )
+        pipe.to("cuda")
+        pipe.vae.enable_tiling()
+        pipe.vae.enable_slicing()
+        print("✅ Mô hình CogVideoX-2b đã nạp hoàn toàn vào 15GB GPU VRAM!\n")
+    else:
         from diffusers import LTXImageToVideoPipeline
         print("⏳ Đang tải mô hình Lightricks/LTX-Video trực tiếp vào GPU VRAM (15GB)...")
         pipe = LTXImageToVideoPipeline.from_pretrained(
@@ -107,17 +119,6 @@ def main():
         if hasattr(pipe, "vae") and hasattr(pipe.vae, "enable_slicing"):
             pipe.vae.enable_slicing()
         print("✅ Mô hình LTX-Video đã nạp an toàn vào GPU VRAM!\n")
-    else:
-        from diffusers import CogVideoXImageToVideoPipeline
-        print("⏳ Đang tải mô hình THUDM/CogVideoX-2b vào GPU VRAM...")
-        pipe = CogVideoXImageToVideoPipeline.from_pretrained(
-            "THUDM/CogVideoX-2b",
-            torch_dtype=torch.float16,
-            low_cpu_mem_usage=True,
-        )
-        pipe.to("cuda")
-        pipe.vae.enable_tiling()
-        print("✅ Mô hình CogVideoX-2b đã sẵn sàng!\n")
 
     # 3. Trích xuất danh mục Shot
     shots = parse_shot_list(shot_list_path)
@@ -170,8 +171,19 @@ def main():
         print(f"     Prompt: \"{s['prompt'][:80]}...\"")
 
         with torch.inference_mode():
-            if args.model == "ltx":
-                # LTX-Video: tỷ lệ 16:9 tối ưu cho T4: 768x512, 121 frames (~5s @ 24fps)
+            if args.model == "cogvideox":
+                # CogVideoX-2B: resize về chuẩn 720x480 và xuất 8fps (~6.1s)
+                resized_image = input_image.resize((720, 480))
+                result = pipe(
+                    prompt=s["prompt"],
+                    image=resized_image,
+                    num_frames=49,
+                    num_inference_steps=args.num_inference_steps,
+                    guidance_scale=6.0,
+                ).frames[0]
+                export_to_video(result, str(output_clip_path), fps=8)
+            else:
+                # LTX-Video: tỷ lệ 16:9 tối ưu: 768x512, 121 frames @ 24fps
                 result = pipe(
                     image=input_image,
                     prompt=s["prompt"],
@@ -182,17 +194,8 @@ def main():
                     frame_rate=24,
                     num_inference_steps=args.num_inference_steps,
                 ).frames[0]
-            else:
-                # CogVideoX-2B: tỷ lệ 720x480
-                result = pipe(
-                    prompt=s["prompt"],
-                    image=input_image,
-                    num_frames=49,
-                    num_inference_steps=args.num_inference_steps,
-                ).frames[0]
+                export_to_video(result, str(output_clip_path), fps=24)
 
-        # Lưu file MP4
-        export_to_video(result, str(output_clip_path), fps=24)
         print(f"  🎉 Đã lưu thành công: {output_clip_path.name}")
 
         # Dọn sạch VRAM sau mỗi shot
