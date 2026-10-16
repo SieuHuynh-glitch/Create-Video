@@ -37,7 +37,8 @@
     "check:media": "tsx scripts/check_media.ts",
     "check:video": "tsx scripts/check_video.ts",
     "check:audio": "tsx scripts/check_audio.ts",
-    "test:factory": "tsx scripts/validate_storyboard.ts runs/media-smoke-test/storyboard.json && tsx scripts/check_media.ts runs/media-smoke-test/storyboard.json && tsx scripts/check_audio.ts runs/media-smoke-test/out/media-smoke-test.mp4",
+    "make": "tsx scripts/make_auto.ts",
+    "upgrade:video": "tsx scripts/upgrade_auto.ts",
     "upgrade": "remotion upgrade",
     "lint": "eslint src && tsc"
   }

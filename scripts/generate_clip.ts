@@ -361,7 +361,7 @@ export async function runGenerateClip(options: GenerateClipOptions) {
 
       // 2. Gọi Pollinations Video API
       console.log(`  ⏱️ Bắt đầu sinh video cho ${currentShotId}...`);
-      const { buffer, durationTakenSec, costHeader, reportedDuration } = await callPollinationsVideo(
+      const { buffer, durationTakenSec, costHeader, reportedDuration: _reportedDuration } = await callPollinationsVideo(
         shotInfo.prompt,
         uploadedUrl,
         model,

@@ -6,4 +6,5 @@ export * from "./QuoteScene";
 export * from "./OutroScene";
 export * from "./ImageScene";
 export * from "./VideoScene";
+export * from "./LumaParallaxScene";
 export * from "./ParticleField";

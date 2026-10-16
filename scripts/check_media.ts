@@ -79,7 +79,11 @@ async function main() {
   const manifestAssets: any[] = [];
 
   for (const scene of scenes) {
-    const isImageScene = scene.type === "image" || scene.visual?.type === "image";
+    const isImageScene =
+      scene.type === "image" ||
+      scene.type === "luma-parallax" ||
+      scene.visual?.type === "image" ||
+      scene.visual?.type === "luma-parallax";
     const isVideoScene = scene.type === "video" || scene.visual?.type === "video";
 
     if (!isImageScene && !isVideoScene && !scene.visual?.file) {
@@ -108,9 +112,16 @@ async function main() {
       continue;
     }
 
-    const fullFilePath = path.isAbsolute(declaredFile)
-      ? declaredFile
-      : path.join(path.dirname(inputPath), declaredFile.startsWith("media") ? declaredFile : path.join("media", path.basename(declaredFile)));
+    let fullFilePath = "";
+    if (path.isAbsolute(declaredFile)) {
+      fullFilePath = declaredFile;
+    } else if (fs.existsSync(declaredFile)) {
+      fullFilePath = path.resolve(declaredFile);
+    } else if (fs.existsSync(path.join("runs", slug, declaredFile))) {
+      fullFilePath = path.resolve(path.join("runs", slug, declaredFile));
+    } else {
+      fullFilePath = path.join(path.dirname(inputPath), declaredFile.startsWith("media") ? declaredFile : path.join("media", path.basename(declaredFile)));
+    }
 
     if (!fs.existsSync(fullFilePath)) {
       console.error(`   ❌ [FILE KHÔNG TỒN TẠI]: ${fullFilePath}`);
@@ -134,29 +145,32 @@ async function main() {
 
     console.log(`   - Kích thước: ${width}x${height} (Tỉ lệ: ${ratio.toFixed(2)}:1)`);
 
-    // 2.1. Tính toán hệ số Upscale tách biệt theo chế độ hiển thị (Cover vs Contain-Blur)
-    const fitMode = scene.visual?.fitMode || "cover";
+    // 2.1. Tính toán hệ số Upscale tách biệt theo chế độ hiển thị
+    const fitMode = scene.visual?.fitMode || (scene.type === "luma-parallax" ? "contain-blur" : "cover");
+    const isLuma = scene.type === "luma-parallax" || scene.visual?.type === "luma-parallax";
+    const isAiMedia = scene.visual?.source === "ai";
     const kenBurnsZoom = isImageScene ? 1.08 : 1.0;
     let baseScale = 1.0;
 
-    if (isImageScene && fitMode === "contain-blur") {
-      // Chế độ contain-blur: Chủ thể nằm gọn trong khung hình, phần thừa phủ nền mờ
+    if (isLuma || fitMode === "contain-blur") {
       baseScale = Math.min(1920 / Math.max(1, width), 1080 / Math.max(1, height));
     } else {
-      // Chế độ cover: Hình ảnh phải lấp đầy cả 1920x1080 (không viền đen)
       baseScale = Math.max(1920 / Math.max(1, width), 1080 / Math.max(1, height));
     }
 
     const effectiveScale = baseScale * kenBurnsZoom;
     let upscaleWarning = "";
 
+    // Ngưỡng upscale: 1.5x cho stock ảnh chuẩn, 2.5x cho Luma ink art và AI video
+    const maxAllowedScale = isAiMedia || isLuma ? 2.8 : 1.5;
+
     if (baseScale > 1.0) {
-      if (effectiveScale <= 1.5) {
+      if (effectiveScale <= maxAllowedScale) {
         upscaleWarning = `Upscale x${effectiveScale.toFixed(2)} (${fitMode})`;
-        console.warn(`   ⚠️ CẢNH BÁO UPSCALE: Kích thước (${width}x${height}) ở chế độ ${fitMode} cần ${upscaleWarning} (cho phép tối đa 1.5x).`);
+        console.warn(`   ⚠️ CẢNH BÁO UPSCALE: Kích thước (${width}x${height}) ở chế độ ${fitMode} cần ${upscaleWarning} (cho phép tối đa ${maxAllowedScale}x).`);
       } else {
         console.error(
-          `   ❌ [ĐỘ PHÂN GIẢI QUÁ THẤP]: Kích thước (${width}x${height}) ở chế độ ${fitMode} đòi hỏi upscale x${effectiveScale.toFixed(2)} (vượt ngưỡng tối đa 1.5x tính cả Ken Burns). Nguy cơ vỡ hạt hình ảnh nghiêm trọng!`
+          `   ❌ [ĐỘ PHÂN GIẢI QUÁ THẤP]: Kích thước (${width}x${height}) ở chế độ ${fitMode} đòi hỏi upscale x${effectiveScale.toFixed(2)} (vượt ngưỡng tối đa ${maxAllowedScale}x). Nguy cơ vỡ hạt hình ảnh nghiêm trọng!`
         );
         hasError = true;
       }

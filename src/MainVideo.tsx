@@ -9,6 +9,7 @@ import {
   OutroScene,
   ImageScene,
   VideoScene,
+  LumaParallaxScene,
   ParticleField,
 } from "./scenes";
 
@@ -94,6 +95,16 @@ function renderSceneComponent(scene: TimelineScene) {
     case "video":
       return (
         <VideoScene
+          onScreenText={onScreenText}
+          voiceoverText={voiceoverText}
+          visual={scene.visual}
+          durationInFrames={scene.durationInFrames}
+          subtitles={subtitles}
+        />
+      );
+    case "luma-parallax":
+      return (
+        <LumaParallaxScene
           onScreenText={onScreenText}
           voiceoverText={voiceoverText}
           visual={scene.visual}

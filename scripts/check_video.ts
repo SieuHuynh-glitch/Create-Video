@@ -283,8 +283,12 @@ async function main() {
       }
     }
 
-    const scenePass = audioExists && hasText && !textOverflowRisk;
-    if (!audioExists && !timelinePath.includes("preview")) {
+    const isInstrumental = timeline.isInstrumental === true;
+    const audioValid = isInstrumental ? true : audioExists;
+    const textValid = isInstrumental ? true : hasText;
+
+    const scenePass = audioValid && textValid && !textOverflowRisk;
+    if (!audioValid && !timelinePath.includes("preview")) {
       hasFatalErrors = true;
     }
 

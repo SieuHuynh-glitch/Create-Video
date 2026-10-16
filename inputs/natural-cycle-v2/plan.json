@@ -1,0 +1,131 @@
+{
+  "slug": "natural-cycle-v2",
+  "targetDurationSec": 120,
+  "totalDurationFrames": 3600,
+  "shotCount": 12,
+  "artStyle": "Surreal Black Ink Art on #FFFFFF Canvas",
+  "motionMode": "Continuous Easing Parallax (Tier 0) + LTX-Video AI (Tier 2)",
+  "shots": [
+    {
+      "id": "shot_01",
+      "imageFile": "scene_02_skull.jpg",
+      "title": "NATURAL CYCLE",
+      "subtitle": "The Endless Cycle of Life & Decay",
+      "prompt": "Surreal monochrome black ink drawing on pure white background, feathery skull awakens with organic feathers swaying gently in wind, high contrast, smooth continuous meditative motion, 24fps",
+      "cameraEase": "zoom_in",
+      "seed": 42,
+      "priority": 1
+    },
+    {
+      "id": "shot_02",
+      "imageFile": "scene_03_cracking.jpg",
+      "title": "",
+      "subtitle": "",
+      "prompt": "Surreal monochrome black ink art on pure white background, delicate cracks spreading across the forehead of the bone skull, charcoal dust rising, high contrast, continuous fluid transformation",
+      "cameraEase": "pan_left",
+      "seed": 179,
+      "priority": 2
+    },
+    {
+      "id": "shot_03",
+      "imageFile": "scene_04_soil.jpg",
+      "title": "",
+      "subtitle": "",
+      "prompt": "Surreal monochrome ink illustration on pure white background, skull dissolving into dark organic seeds falling into fertile soil, root fibers emerging, high contrast, smooth motion",
+      "cameraEase": "breathing",
+      "seed": 316,
+      "priority": 1
+    },
+    {
+      "id": "shot_04",
+      "imageFile": "scene_05_seedling.jpg",
+      "title": "",
+      "subtitle": "",
+      "prompt": "Surreal black ink painting on pure white background, tiny organic seedling sprouting upwards through soil, delicate spiraling stem, high contrast, continuous time-lapse motion",
+      "cameraEase": "zoom_out",
+      "seed": 453,
+      "priority": 2
+    },
+    {
+      "id": "shot_05",
+      "imageFile": "scene_06_seedling_zoom.jpg",
+      "title": "",
+      "subtitle": "",
+      "prompt": "Surreal black ink painting on pure white background, tiny organic seedling sprouting upwards through soil, delicate spiraling stem, high contrast, continuous time-lapse motion",
+      "cameraEase": "pan_right",
+      "seed": 590,
+      "priority": 1
+    },
+    {
+      "id": "shot_06",
+      "imageFile": "scene_07_tree_growing.jpg",
+      "title": "",
+      "subtitle": "",
+      "prompt": "Surreal monochrome ink drawing on pure white background, ancient tree trunk expanding outwards, twisted branches intertwining like neural networks, fluid continuous growth",
+      "cameraEase": "breathing",
+      "seed": 727,
+      "priority": 2
+    },
+    {
+      "id": "shot_07",
+      "imageFile": "scene_08_tree_fruits.jpg",
+      "title": "",
+      "subtitle": "",
+      "prompt": "Surreal monochrome ink painting on pure white background, heavy blooming tree branches laden with miniature skull-shaped fruits gently swaying in breeze",
+      "cameraEase": "zoom_in",
+      "seed": 864,
+      "priority": 1
+    },
+    {
+      "id": "shot_08",
+      "imageFile": "scene_09_fruit_falling.jpg",
+      "title": "",
+      "subtitle": "",
+      "prompt": "Surreal black ink art on pure white background, miniature skull fruit detaching and falling slowly through space, leaves swirling in gentle vortex, smooth slow-motion",
+      "cameraEase": "pan_left",
+      "seed": 1001,
+      "priority": 2
+    },
+    {
+      "id": "shot_09",
+      "imageFile": "scene_10_skull_return.jpg",
+      "title": "",
+      "subtitle": "",
+      "prompt": "Surreal monochrome black ink drawing on pure white background, feathery skull awakens with organic feathers swaying gently in wind, high contrast, smooth continuous meditative motion, 24fps",
+      "cameraEase": "breathing",
+      "seed": 1138,
+      "priority": 1
+    },
+    {
+      "id": "shot_10",
+      "imageFile": "skull_reference.jpg",
+      "title": "",
+      "subtitle": "",
+      "prompt": "Surreal monochrome black ink drawing on pure white background, feathery skull awakens with organic feathers swaying gently in wind, high contrast, smooth continuous meditative motion, 24fps",
+      "cameraEase": "zoom_out",
+      "seed": 1275,
+      "priority": 2
+    },
+    {
+      "id": "shot_11",
+      "imageFile": "scene_02_skull.jpg",
+      "title": "",
+      "subtitle": "",
+      "prompt": "Surreal monochrome black ink drawing on pure white background, feathery skull awakens with organic feathers swaying gently in wind, high contrast, smooth continuous meditative motion, 24fps",
+      "cameraEase": "pan_right",
+      "seed": 1412,
+      "priority": 1
+    },
+    {
+      "id": "shot_12",
+      "imageFile": "scene_03_cracking.jpg",
+      "title": "INFINITE METAMORPHOSIS",
+      "subtitle": "",
+      "prompt": "Surreal monochrome black ink art on pure white background, delicate cracks spreading across the forehead of the bone skull, charcoal dust rising, high contrast, continuous fluid transformation",
+      "cameraEase": "breathing",
+      "seed": 1549,
+      "priority": 2
+    }
+  ],
+  "updatedAt": "2026-10-16T10:37:16.046Z"
+}

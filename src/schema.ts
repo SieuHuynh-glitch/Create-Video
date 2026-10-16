@@ -11,13 +11,14 @@ export const SceneTypeSchema = z.enum([
   "outro",
   "image",
   "video",
+  "luma-parallax",
 ]);
 export type SceneType = z.infer<typeof SceneTypeSchema>;
 
 /**
  * Kiểu phương tiện hình ảnh trực quan (Visual Media)
  */
-export const VisualTypeSchema = z.enum(["motion", "image", "video"]);
+export const VisualTypeSchema = z.enum(["motion", "image", "video", "luma-parallax"]);
 export type VisualType = z.infer<typeof VisualTypeSchema>;
 
 /**
@@ -31,6 +32,16 @@ export type FitMode = z.infer<typeof FitModeSchema>;
 
 export const FocalPointSchema = z.enum(["center", "top-center", "bottom-center"]);
 export type FocalPoint = z.infer<typeof FocalPointSchema>;
+
+export const CameraEaseSchema = z.enum([
+  "zoom_in",
+  "zoom_out",
+  "pan_left",
+  "pan_right",
+  "breathing",
+  "static",
+]);
+export type CameraEase = z.infer<typeof CameraEaseSchema>;
 
 /**
  * Cấu hình phương tiện hình ảnh/video của từng cảnh
@@ -46,6 +57,10 @@ export const VisualConfigSchema = z.object({
   focalPoint: FocalPointSchema.default("center"), // center | top-center (bảo vệ mặt nhân vật) | bottom-center
   clipDurationInFrames: z.number().optional(), // Thời lượng clip video thực tế đo bởi ffprobe
   playbackRate: z.number().positive().optional(), // Hệ số làm chậm/tăng tốc (mặc định 0.75 cho slow-motion)
+  cameraEase: CameraEaseSchema.optional(), // Kiểu chuyển động camera thiền định
+  lumaThreshold: z.number().optional(), // Ngưỡng sáng tách nền (mặc định 240 cho nền trắng)
+  seed: z.number().optional(), // Seed cố định cho tái hiện
+  model: z.string().optional(), // Mô hình AI (ví dụ: Lightricks/LTX-Video)
 });
 export type VisualConfig = z.infer<typeof VisualConfigSchema>;
 
@@ -78,7 +93,7 @@ export type OnScreenText = z.infer<typeof OnScreenTextSchema>;
 export const StoryboardSceneSchema = z.object({
   id: z.string().regex(/^(scene|shot)_\d{2}$/, "ID cảnh phải có định dạng scene_01 hoặc shot_01..."),
   type: SceneTypeSchema,
-  voiceoverText: z.string().min(1, "Lời đọc thuyết minh không được để trống"),
+  voiceoverText: z.string().default(""),
   onScreenText: OnScreenTextSchema,
   visual: VisualConfigSchema.optional(),
   transition: TransitionTypeSchema.default("fade"),
