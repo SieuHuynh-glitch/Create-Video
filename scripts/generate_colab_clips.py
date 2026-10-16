@@ -90,28 +90,32 @@ def main():
     dtype = torch.bfloat16 if torch.cuda.is_bf16_supported() else torch.float16
     print(f"⚡ Kiểu dữ liệu tối ưu: {dtype}\n")
 
-    # 2. Tải Pipeline mô hình vào VRAM
+    # 2. Tải Pipeline mô hình vào GPU VRAM (Tránh ngốn System RAM gây OOM)
     from diffusers.utils import export_to_video, load_image
 
     if args.model == "ltx":
         from diffusers import LTXImageToVideoPipeline
-        print("⏳ Đang tải mô hình Lightricks/LTX-Video vào GPU...")
+        print("⏳ Đang tải mô hình Lightricks/LTX-Video trực tiếp vào GPU VRAM (15GB)...")
         pipe = LTXImageToVideoPipeline.from_pretrained(
             "Lightricks/LTX-Video",
-            torch_dtype=dtype,
+            torch_dtype=torch.float16,
+            low_cpu_mem_usage=True,
         )
-        pipe.enable_model_cpu_offload()
+        pipe.to("cuda")
         if hasattr(pipe, "vae") and hasattr(pipe.vae, "enable_tiling"):
             pipe.vae.enable_tiling()
-        print("✅ Mô hình LTX-Video đã sẵn sàng!\n")
+        if hasattr(pipe, "vae") and hasattr(pipe.vae, "enable_slicing"):
+            pipe.vae.enable_slicing()
+        print("✅ Mô hình LTX-Video đã nạp an toàn vào GPU VRAM!\n")
     else:
         from diffusers import CogVideoXImageToVideoPipeline
-        print("⏳ Đang tải mô hình THUDM/CogVideoX-2b vào GPU...")
+        print("⏳ Đang tải mô hình THUDM/CogVideoX-2b vào GPU VRAM...")
         pipe = CogVideoXImageToVideoPipeline.from_pretrained(
             "THUDM/CogVideoX-2b",
-            torch_dtype=dtype,
+            torch_dtype=torch.float16,
+            low_cpu_mem_usage=True,
         )
-        pipe.enable_model_cpu_offload()
+        pipe.to("cuda")
         pipe.vae.enable_tiling()
         print("✅ Mô hình CogVideoX-2b đã sẵn sàng!\n")
 
@@ -190,6 +194,12 @@ def main():
         # Lưu file MP4
         export_to_video(result, str(output_clip_path), fps=24)
         print(f"  🎉 Đã lưu thành công: {output_clip_path.name}")
+
+        # Dọn sạch VRAM sau mỗi shot
+        del result
+        import gc
+        gc.collect()
+        torch.cuda.empty_cache()
 
         # Trích xuất ngay khung cuối cho shot tiếp theo nếu cần
         next_shot_num = s["num"] + 1
