@@ -1,0 +1,110 @@
+{
+  "slug": "smoke-test",
+  "title": "Smoke Test Nhà Máy Video Tự Động",
+  "fps": 30,
+  "width": 1920,
+  "height": 1080,
+  "totalDurationSec": 16.9,
+  "totalDurationInFrames": 508,
+  "bgm": {
+    "file": "system-audio/bgm_ambient.wav",
+    "volume": 0.08,
+    "loop": true,
+    "fadeInFrames": 30,
+    "fadeOutFrames": 45
+  },
+  "scenes": [
+    {
+      "id": "scene_01",
+      "type": "title",
+      "voiceoverText": "Chào mừng bạn đến với nhà máy video, giải pháp tự động hóa nội dung hoàn toàn mới.",
+      "onScreenText": {
+        "title": "NHÀ MÁY SẢN XUẤT VIDEO",
+        "subtitle": "Tự động hóa toàn diện bằng Remotion & AI"
+      },
+      "transition": "fade",
+      "estimatedDurationSec": 5,
+      "audioFile": "runs/smoke-test/audio/scene_01.mp3",
+      "audioStartFrame": 6,
+      "audioDurationInFrames": 167,
+      "durationSec": 6.17,
+      "durationInFrames": 185,
+      "startFrame": 0,
+      "subtitles": [
+        {
+          "text": "Chào mừng bạn đến với nhà máy video, giải pháp",
+          "startFrame": 9,
+          "endFrame": 100
+        },
+        {
+          "text": "tự động hóa nội dung hoàn toàn mới.",
+          "startFrame": 100,
+          "endFrame": 173
+        }
+      ]
+    },
+    {
+      "id": "scene_02",
+      "type": "bullets",
+      "voiceoverText": "Hệ thống vận hành bằng dữ liệu, tối ưu chất lượng và hoàn toàn miễn phí.",
+      "onScreenText": {
+        "title": "ƯU ĐIỂM NỔI BẬT",
+        "bulletPoints": [
+          "100% miễn phí, không API trả phí",
+          "Điều khiển hoàn toàn bằng timeline.json",
+          "Kiểm soát chất lượng qua ba cổng tự động"
+        ]
+      },
+      "transition": "fade",
+      "estimatedDurationSec": 5,
+      "audioFile": "runs/smoke-test/audio/scene_02.mp3",
+      "audioStartFrame": 6,
+      "audioDurationInFrames": 147,
+      "durationSec": 5.5,
+      "durationInFrames": 165,
+      "startFrame": 185,
+      "subtitles": [
+        {
+          "text": "Hệ thống vận hành bằng dữ liệu, tối ưu chất",
+          "startFrame": 9,
+          "endFrame": 99
+        },
+        {
+          "text": "lượng và hoàn toàn miễn phí.",
+          "startFrame": 99,
+          "endFrame": 153
+        }
+      ]
+    },
+    {
+      "id": "scene_03",
+      "type": "outro",
+      "voiceoverText": "Quy trình kiểm thử đã hoàn tất, sẵn sàng phục vụ sản xuất thực tế.",
+      "onScreenText": {
+        "title": "SMOKE TEST THÀNH CÔNG",
+        "subtitle": "Hệ thống đã sẵn sàng xuất xưởng",
+        "callToAction": "BẮT ĐẦU SẢN XUẤT NGAY"
+      },
+      "transition": "fade",
+      "estimatedDurationSec": 5,
+      "audioFile": "runs/smoke-test/audio/scene_03.mp3",
+      "audioStartFrame": 6,
+      "audioDurationInFrames": 134,
+      "durationSec": 5.27,
+      "durationInFrames": 158,
+      "startFrame": 350,
+      "subtitles": [
+        {
+          "text": "Quy trình kiểm thử đã hoàn tất, sẵn sàng phục",
+          "startFrame": 9,
+          "endFrame": 96
+        },
+        {
+          "text": "vụ sản xuất thực tế.",
+          "startFrame": 96,
+          "endFrame": 140
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,35 @@
+{
+  "slug": "media-smoke-test",
+  "verifiedAt": "2026-10-16T03:13:55.273Z",
+  "totalAssets": 2,
+  "assets": [
+    {
+      "sceneId": "scene_02",
+      "sceneType": "image",
+      "file": "media/scene_02.jpg",
+      "fullPath": "runs\\media-smoke-test\\media\\scene_02.jpg",
+      "resolution": "1920x1080",
+      "aspectRatio": "1.78",
+      "is169": true,
+      "source": "own",
+      "license": "User Uploaded / Creative Commons",
+      "attribution": "User Uploaded",
+      "status": "VERIFIED"
+    },
+    {
+      "sceneId": "scene_03",
+      "sceneType": "video",
+      "file": "media/scene_03.mp4",
+      "fullPath": "runs\\media-smoke-test\\media\\scene_03.mp4",
+      "resolution": "1920x1080",
+      "aspectRatio": "1.78",
+      "is169": true,
+      "durationSec": 15,
+      "source": "own",
+      "license": "Internal Project Asset",
+      "attribution": "Remotion factory sample clip",
+      "status": "VERIFIED"
+    }
+  ],
+  "status": "PASSED"
+}

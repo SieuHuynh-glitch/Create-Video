@@ -1,0 +1,61 @@
+{
+  "slug": "media-smoke-test",
+  "title": "Nâng Cấp Nhà Máy Video: Ảnh & Cảnh Quay Thật",
+  "targetDurationSec": 15,
+  "scenes": [
+    {
+      "id": "scene_01",
+      "type": "title",
+      "voiceoverText": "Nhà máy sản xuất video Remotion chính thức hỗ trợ hình ảnh và cảnh quay thật.",
+      "onScreenText": {
+        "title": "VIDEO FACTORY 2.0",
+        "subtitle": "Hỗ Trợ Hình Ảnh & Cảnh Quay Thật"
+      },
+      "visual": {
+        "type": "motion"
+      },
+      "transition": "fade",
+      "estimatedDurationSec": 5
+    },
+    {
+      "id": "scene_02",
+      "type": "image",
+      "voiceoverText": "Tích hợp hình ảnh mượt mà cùng hiệu ứng phóng to chậm và lớp phủ văn bản tương phản cao.",
+      "onScreenText": {
+        "title": "HÌNH ẢNH SỐNG ĐỘNG",
+        "subtitle": "Hiệu ứng Ken Burns & Scrim tối ưu độ đọc"
+      },
+      "visual": {
+        "type": "image",
+        "file": "media/scene_02.jpg",
+        "fitMode": "contain-blur",
+        "focalPoint": "top-center",
+        "prompt": "Masterpiece anime girl blonde hair blue eyes classroom 16:9",
+        "source": "own",
+        "license": "User Uploaded / Creative Commons",
+        "attribution": "User Uploaded"
+      },
+      "transition": "fade",
+      "estimatedDurationSec": 5
+    },
+    {
+      "id": "scene_03",
+      "type": "video",
+      "voiceoverText": "Cảnh quay video chuyển động chân thực, tự động cắt và lặp khớp chính xác với giọng đọc.",
+      "onScreenText": {
+        "title": "CẢNH QUAY ĐIỆN ẢNH",
+        "subtitle": "OffthreadVideo tự động đồng bộ thời lượng"
+      },
+      "visual": {
+        "type": "video",
+        "file": "media/scene_03.mp4",
+        "prompt": "Cinematic motion video clip 16:9",
+        "source": "own",
+        "license": "Internal Project Asset",
+        "attribution": "Remotion factory sample clip"
+      },
+      "transition": "fade",
+      "estimatedDurationSec": 5
+    }
+  ]
+}

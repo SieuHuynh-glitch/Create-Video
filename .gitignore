@@ -1,0 +1,19 @@
+node_modules
+dist
+build
+.DS_Store
+.env
+__pycache__
+*.pyc
+
+# Ignore temporary sync files and output media from Git
+public/runs/
+runs/*/out/
+runs/*/audio/*.mp3
+runs/*/audio/*.vtt
+runs/*/media/*.mp4
+runs/*/media/*.jpg
+runs/*/media/*.png
+out/
+.tempmediaStorage/
+.system_generated/
