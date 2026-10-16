@@ -1,12 +1,34 @@
 import os
 import re
 import sys
+import gc
 import argparse
 import subprocess
 from pathlib import Path
 
+# Đảm bảo xuất chuẩn UTF-8 (chống lỗi UnicodeEncodeError trên Windows / IDE)
+if hasattr(sys.stdout, "reconfigure"):
+    try:
+        sys.stdout.reconfigure(encoding="utf-8")
+        sys.stderr.reconfigure(encoding="utf-8")
+    except Exception:
+        pass
+
 # Ngăn chặn phân mảnh VRAM trên PyTorch theo khuyến nghị chính thức
 os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "expandable_segments:True"
+
+# Nạp an toàn các thư viện AI (Có try-except để không crash hoặc báo lỗi linter trên máy local)
+try:
+    import torch
+    from diffusers.utils import export_to_video, load_image
+    from diffusers import (
+        StableVideoDiffusionPipeline,
+        LTXImageToVideoPipeline,
+        CogVideoXImageToVideoPipeline,
+    )
+    AI_LIBS_AVAILABLE = True
+except ImportError:
+    AI_LIBS_AVAILABLE = False
 
 # Thiết lập đường dẫn gốc
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
@@ -82,8 +104,14 @@ def main():
     print(f"   Dự án: {args.run} | Mô hình: {args.model.upper()} (Tối ưu RAM 12.7GB)")
     print("=" * 60 + "\n")
 
-    # 1. Kiểm tra PyTorch và GPU
-    import torch
+    # 1. Kiểm tra môi trường thư viện AI
+    if not AI_LIBS_AVAILABLE:
+        print("❌ LỖI MÔI TRƯỜNG: Không tìm thấy thư viện 'torch' hoặc 'diffusers'!")
+        print("ℹ️ File này được tạo để chạy trên GPU Google Colab (nơi đã cài đặt sẵn các thư viện AI).")
+        print("   Nếu đang chạy trên Colab, vui lòng đảm bảo đã chạy Bước 2: !pip install -q diffusers transformers accelerate...")
+        sys.exit(1)
+
+    # 2. Kiểm tra PyTorch và GPU
     if not torch.cuda.is_available():
         print("❌ CẢNH BÁO: Không tìm thấy GPU CUDA! Vui lòng chọn Runtime -> Change runtime type -> T4 GPU trên Colab.")
         sys.exit(1)
@@ -93,14 +121,12 @@ def main():
     dtype = torch.float16
     print(f"⚡ Kiểu dữ liệu tối ưu: {dtype}\n")
 
-    # 2. Tải Pipeline mô hình với Dynamic CPU Offloading (Chống tràn VRAM trên GPU T4 15GB)
-    import gc
+    # 3. Dọn rác VRAM trước khi nạp mô hình
     gc.collect()
     torch.cuda.empty_cache()
-    from diffusers.utils import export_to_video, load_image
 
+    # 4. Tải Pipeline mô hình với Dynamic CPU Offloading (Chống tràn VRAM trên GPU T4 15GB)
     if args.model == "svd":
-        from diffusers import StableVideoDiffusionPipeline
         print("⏳ Đang tải mô hình StabilityAI SVD-XT (Siêu ổn định 4.8GB - Chuẩn Image-to-Video trên T4)...")
         pipe = StableVideoDiffusionPipeline.from_pretrained(
             "stabilityai/stable-video-diffusion-img2vid-xt-1-1",
@@ -111,7 +137,6 @@ def main():
         pipe.enable_model_cpu_offload()
         print("✅ Mô hình SVD-XT đã kích hoạt Dynamic CPU Offload thành công! (VRAM tiêu thụ an toàn ~4.5GB / 15GB)\n")
     elif args.model == "ltx":
-        from diffusers import LTXImageToVideoPipeline
         print("⏳ Đang tải mô hình Lightricks/LTX-Video (Kích hoạt Dynamic CPU Offload)...")
         pipe = LTXImageToVideoPipeline.from_pretrained(
             "Lightricks/LTX-Video",
@@ -125,7 +150,6 @@ def main():
         pipe.enable_model_cpu_offload()
         print("✅ Mô hình LTX-Video đã kích hoạt Dynamic CPU Offload!\n")
     else:
-        from diffusers import CogVideoXImageToVideoPipeline
         print("⏳ Đang tải mô hình THUDM/CogVideoX-2b (Kích hoạt Dynamic CPU Offload)...")
         try:
             pipe = CogVideoXImageToVideoPipeline.from_pretrained(
@@ -139,7 +163,6 @@ def main():
             print("✅ Mô hình CogVideoX-2b đã kích hoạt Dynamic CPU Offload thành công!\n")
         except Exception as e:
             print(f"⚠️ CogVideoX-2B chỉ hỗ trợ Text-to-Video ({e}). Tự động chuyển đổi mượt mà sang SVD-XT (Image-to-Video)...")
-            from diffusers import StableVideoDiffusionPipeline
             args.model = "svd"
             pipe = StableVideoDiffusionPipeline.from_pretrained(
                 "stabilityai/stable-video-diffusion-img2vid-xt-1-1",
@@ -249,7 +272,6 @@ def main():
         del input_image
         if 'resized_image' in locals():
             del resized_image
-        import gc
         gc.collect()
         torch.cuda.empty_cache()
         if hasattr(torch.cuda, "ipc_collect"):
