@@ -1,6 +1,12 @@
 {
   "version": 1,
   "skills": {
+    "hf-mem": {
+      "source": "huggingface/skills",
+      "sourceType": "github",
+      "skillPath": "skills/hf-mem/SKILL.md",
+      "computedHash": "09de3deaf8a6399ede5f144551142a4a3a705c5bd0bb83938d585169d2685f0f"
+    },
     "remotion-best-practices": {
       "source": "remotion-dev/skills",
       "sourceType": "github",
