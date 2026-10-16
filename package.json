@@ -30,6 +30,7 @@
     "clean": "tsx scripts/clean_run.ts",
     "fetch:media": "tsx scripts/fetch_ai_media.ts",
     "voiceover": "tsx scripts/generate_voiceover.ts",
+    "generate:clip": "tsx scripts/generate_clip.ts",
     "calibrate": "tsx scripts/calibrate_wpm.ts",
     "contact-sheet": "tsx scripts/generate_contact_sheet.ts",
     "social": "tsx scripts/generate_social.ts",

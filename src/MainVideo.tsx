@@ -1,5 +1,5 @@
 import React from "react";
-import { Sequence, Audio, staticFile, interpolate } from "remotion";
+import { Sequence, Audio, staticFile, interpolate, useCurrentFrame } from "remotion";
 import { Timeline, TimelineScene } from "./schema";
 import {
   TitleScene,
@@ -9,9 +9,31 @@ import {
   OutroScene,
   ImageScene,
   VideoScene,
+  ParticleField,
 } from "./scenes";
 
 export type MainVideoProps = Timeline;
+
+const SceneContent: React.FC<{
+  scene: TimelineScene;
+  idx: number;
+}> = ({ scene, idx }) => {
+  const frame = useCurrentFrame();
+  const overlapFrames = 30; // 1.0s melting overlap
+  const opacity =
+    idx > 0
+      ? interpolate(frame, [0, overlapFrames], [0, 1], {
+          extrapolateLeft: "clamp",
+          extrapolateRight: "clamp",
+        })
+      : 1;
+
+  return (
+    <div style={{ width: "100%", height: "100%", opacity }}>
+      {renderSceneComponent(scene)}
+    </div>
+  );
+};
 
 function renderSceneComponent(scene: TimelineScene) {
   const onScreenText = scene.onScreenText || {};
@@ -94,6 +116,7 @@ export const MainVideo: React.FC<MainVideoProps> = ({
   scenes = [],
   totalDurationInFrames,
   bgm,
+  isInstrumental,
 }) => {
   const totalVideoFrames =
     totalDurationInFrames ||
@@ -104,6 +127,8 @@ export const MainVideo: React.FC<MainVideoProps> = ({
     ? bgm.file.replace(/^[/\\]+/, "").trim()
     : "system-audio/bgm_ambient.wav";
   const bgmVolume = bgm?.volume ?? 0.08;
+
+  const isInstrumentalVideo = isInstrumental === true;
 
   return (
     <div
@@ -121,7 +146,7 @@ export const MainVideo: React.FC<MainVideoProps> = ({
           src={staticFile(bgmFile)}
           volume={(f) => {
             // Kiểm tra xem frame f có nằm trong khoảng phát giọng đọc của cảnh nào không
-            const isVoiceoverActive = (scenes || []).some((scene) => {
+            const isVoiceoverActive = !isInstrumentalVideo && (scenes || []).some((scene) => {
               const start = (scene.startFrame ?? 0) + (scene.audioStartFrame ?? 6);
               const duration =
                 scene.audioDurationInFrames ||
@@ -159,11 +184,11 @@ export const MainVideo: React.FC<MainVideoProps> = ({
             durationInFrames={Math.max(1, scene.durationInFrames ?? 1)}
             name={`${scene.id} (${scene.type})`}
           >
-            {/* Visual Scene Content */}
-            {renderSceneComponent(scene)}
+            {/* Visual Scene Content với Melting Dissolve Transition (1.0s = 30 frames) */}
+            <SceneContent scene={scene} idx={idx} />
 
-            {/* Transition Whoosh SFX cho các cảnh chuyển tiếp (từ cảnh thứ 2 trở đi) */}
-            {idx > 0 ? (
+            {/* Transition Whoosh SFX cho các cảnh chuyển tiếp (chỉ bật khi không phải instrumental) */}
+            {!isInstrumentalVideo && idx > 0 ? (
               <Sequence from={0} durationInFrames={20}>
                 <Audio
                   src={staticFile("system-audio/sfx_whoosh.wav")}
@@ -184,6 +209,9 @@ export const MainVideo: React.FC<MainVideoProps> = ({
           </Sequence>
         );
       })}
+
+      {/* 3. Lớp hạt bụi hữu cơ & vi khí quyển (ParticleField) chạy xuyên suốt video */}
+      <ParticleField color="#000000" opacity={0.06} />
     </div>
   );
 };

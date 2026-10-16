@@ -45,6 +45,7 @@ export const VisualConfigSchema = z.object({
   fitMode: FitModeSchema.default("cover"), // cover | contain-blur (chống cắt ảnh)
   focalPoint: FocalPointSchema.default("center"), // center | top-center (bảo vệ mặt nhân vật) | bottom-center
   clipDurationInFrames: z.number().optional(), // Thời lượng clip video thực tế đo bởi ffprobe
+  playbackRate: z.number().positive().optional(), // Hệ số làm chậm/tăng tốc (mặc định 0.75 cho slow-motion)
 });
 export type VisualConfig = z.infer<typeof VisualConfigSchema>;
 
@@ -75,7 +76,7 @@ export type OnScreenText = z.infer<typeof OnScreenTextSchema>;
  * Schema cho một cảnh trong kịch bản phân cảnh (Storyboard Scene)
  */
 export const StoryboardSceneSchema = z.object({
-  id: z.string().regex(/^scene_\d{2}$/, "ID cảnh phải có định dạng scene_01, scene_02..."),
+  id: z.string().regex(/^(scene|shot)_\d{2}$/, "ID cảnh phải có định dạng scene_01 hoặc shot_01..."),
   type: SceneTypeSchema,
   voiceoverText: z.string().min(1, "Lời đọc thuyết minh không được để trống"),
   onScreenText: OnScreenTextSchema,
@@ -92,6 +93,7 @@ export const StoryboardSchema = z.object({
   slug: z.string().min(1),
   title: z.string().min(1),
   targetDurationSec: z.number().positive().default(120),
+  isInstrumental: z.boolean().optional(),
   scenes: z.array(StoryboardSceneSchema).min(1, "Storyboard phải có ít nhất 1 cảnh"),
 });
 export type Storyboard = z.infer<typeof StoryboardSchema>;
@@ -143,6 +145,7 @@ export const TimelineSchema = z.object({
   height: z.number().int().positive().default(1080),
   totalDurationSec: z.number().positive(),
   totalDurationInFrames: z.number().int().positive(),
+  isInstrumental: z.boolean().optional(),
   bgm: BgmConfigSchema.optional(),
   scenes: z.array(TimelineSceneSchema).min(1, "Timeline phải có ít nhất 1 cảnh"),
 });

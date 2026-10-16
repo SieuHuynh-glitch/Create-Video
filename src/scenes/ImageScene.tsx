@@ -200,19 +200,21 @@ export const ImageScene: React.FC<ImageSceneProps> = ({
         </div>
       )}
 
-      {/* 2. Lớp phủ Gradient Scrim bảo vệ chữ */}
-      <div
-        style={{
-          position: "absolute",
-          top: 0,
-          left: 0,
-          width: "100%",
-          height: "100%",
-          background:
-            "linear-gradient(to top, rgba(11, 15, 25, 0.95) 0%, rgba(11, 15, 25, 0.35) 45%, rgba(11, 15, 25, 0.75) 100%)",
-          pointerEvents: "none",
-        }}
-      />
+      {/* 2. Lớp phủ Gradient Scrim bảo vệ chữ (chỉ hiển thị khi thực sự có text) */}
+      {!!(onScreenText.title || onScreenText.subtitle || (subtitles && subtitles.length > 0)) && (
+        <div
+          style={{
+            position: "absolute",
+            top: 0,
+            left: 0,
+            width: "100%",
+            height: "100%",
+            background:
+              "linear-gradient(to top, rgba(11, 15, 25, 0.95) 0%, rgba(11, 15, 25, 0.35) 45%, rgba(11, 15, 25, 0.75) 100%)",
+            pointerEvents: "none",
+          }}
+        />
+      )}
 
       {/* 3. Phần tiêu đề / nhãn thông tin phía trên */}
       <div

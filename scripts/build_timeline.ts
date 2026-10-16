@@ -7,7 +7,22 @@ import { StoryboardSchema, TimelineSchema, TimelineScene, SubtitleCue } from "..
  * Hàm lấy thời lượng audio (giây) từ file VTT đi kèm hoặc ước tính dung lượng
  */
 function getAudioDurationSec(audioPath: string): number {
-  const vttPath = audioPath.replace(/\.mp3$/, ".vtt");
+  if (fs.existsSync(audioPath)) {
+    try {
+      const output = execSync(
+        `npx remotion ffprobe -v error -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 "${audioPath}"`,
+        { encoding: "utf-8" }
+      );
+      const dur = parseFloat(output.trim());
+      if (!isNaN(dur) && dur > 0) {
+        return Math.round(dur * 100) / 100;
+      }
+    } catch {
+      // Fallback if ffprobe call fails
+    }
+  }
+
+  const vttPath = audioPath.replace(/\.(mp3|wav)$/, ".vtt");
   if (fs.existsSync(vttPath)) {
     const vttContent = fs.readFileSync(vttPath, "utf-8");
     // Tìm mốc thời gian cuối cùng trong VTT/SRT: 00:00:08.500 hoặc 00:00:08,500
@@ -25,12 +40,13 @@ function getAudioDurationSec(audioPath: string): number {
     }
   }
 
-  // Fallback: Ước tính từ dung lượng file MP3 (Edge-TTS mono 48kbps = 6000 bytes/sec)
+  // Fallback: Ước tính từ dung lượng file
   if (fs.existsSync(audioPath)) {
     const stats = fs.statSync(audioPath);
-    const bytes = stats.size;
-    const estimated = Math.max(3.0, Math.round((bytes / 6000) * 10) / 10);
-    return estimated;
+    if (audioPath.endsWith(".wav")) {
+      return Math.round((stats.size / 176400) * 10) / 10;
+    }
+    return Math.max(3.0, Math.round((stats.size / 6000) * 10) / 10);
   }
 
   return 5.0; // Mặc định 5s nếu chưa có audio
@@ -173,13 +189,23 @@ function runBuildTimeline(storyboardPath: string, audioDir: string, outputPath: 
   for (let idx = 0; idx < totalSceneCount; idx++) {
     const scene = validatedStoryboard.scenes[idx];
     const isLastScene = idx === totalSceneCount - 1;
-    const audioFileName = `${scene.id}.mp3`;
-    const fullAudioPath = path.join(audioDir, audioFileName);
+    const isInstrumental = validatedStoryboard.isInstrumental === true;
+
+    let audioFileName = "";
+    if (fs.existsSync(path.join(audioDir, `${scene.id}.wav`))) {
+      audioFileName = `${scene.id}.wav`;
+    } else if (fs.existsSync(path.join(audioDir, `${scene.id}.mp3`))) {
+      audioFileName = `${scene.id}.mp3`;
+    }
+
+    const fullAudioPath = audioFileName ? path.join(audioDir, audioFileName) : "";
     const fullVttPath = path.join(audioDir, `${scene.id}.vtt`);
-    const relativeAudioPath = path.join("runs", validatedStoryboard.slug, "audio", audioFileName).replace(/\\/g, "/");
+    const relativeAudioPath = audioFileName
+      ? path.posix.join("runs", validatedStoryboard.slug, "audio", audioFileName)
+      : "";
 
     let rawAudioDurationSec = scene.estimatedDurationSec || 5.0;
-    if (fs.existsSync(fullAudioPath)) {
+    if (fullAudioPath && fs.existsSync(fullAudioPath)) {
       rawAudioDurationSec = getAudioDurationSec(fullAudioPath);
       console.log(`🎵 [${scene.id}] Audio tìm thấy: ${audioFileName} -> Thời lượng gốc: ${rawAudioDurationSec}s`);
       // Đồng bộ vào public/ để Remotion staticFile phục vụ khi render
@@ -196,23 +222,28 @@ function runBuildTimeline(storyboardPath: string, audioDir: string, outputPath: 
     }
 
     // Audio Breathing Room Padding:
-    // - Pre-roll: 6 frames (0.2s) cho visual ổn định trước khi phát giọng
-    // - Post-roll: 12 frames (0.4s), hoặc 18 frames (0.6s) cho cảnh kết thúc
-    const preRollFrames = 6;
-    const postRollFrames = isLastScene ? 18 : 12;
-    const audioDurationInFrames = Math.ceil(rawAudioDurationSec * fps);
-    const durationInFrames = preRollFrames + audioDurationInFrames + postRollFrames;
+    // Với instrumental video: Không chèn padding giọng đọc để bảo đảm khớp chính xác timeline
+    const preRollFrames = isInstrumental ? 0 : 6;
+    const postRollFrames = isInstrumental ? 0 : (isLastScene ? 18 : 12);
+    const audioDurationInFrames = Math.round(rawAudioDurationSec * fps);
+    const durationInFrames = isInstrumental
+      ? audioDurationInFrames
+      : (preRollFrames + audioDurationInFrames + postRollFrames);
     const durationSec = Math.round((durationInFrames / fps) * 100) / 100;
 
     // Sinh phụ đề Cues đồng bộ chính xác (mỗi cue <= 10 từ)
-    const subtitles = generateSubtitleCues(
-      fullVttPath,
-      scene.voiceoverText,
-      preRollFrames,
-      rawAudioDurationSec,
-      fps
-    );
-    console.log(`   📝 Subtitle Cues: ${subtitles.length} cues được gắn kết`);
+    const subtitles = isInstrumental
+      ? []
+      : generateSubtitleCues(
+          fullVttPath,
+          scene.voiceoverText,
+          preRollFrames,
+          rawAudioDurationSec,
+          fps
+        );
+    if (!isInstrumental) {
+      console.log(`   📝 Subtitle Cues: ${subtitles.length} cues được gắn kết`);
+    }
 
     // Xử lý đồng bộ file visual media (ảnh / video) nếu có
     let sceneVisual = scene.visual ? { ...scene.visual } : undefined;
@@ -277,6 +308,42 @@ function runBuildTimeline(storyboardPath: string, audioDir: string, outputPath: 
   const totalDurationInFrames = currentStartFrame;
   const roundedTotalSec = Math.round(totalDurationSec * 10) / 10;
 
+  // Kiểm tra custom BGM cho dự án
+  let bgmConfig = {
+    file: "system-audio/bgm_ambient.wav",
+    volume: 0.08,
+    loop: true,
+    fadeInFrames: 30,
+    fadeOutFrames: 45,
+  };
+
+  const candidateBgmFiles = [
+    `bgm_${validatedStoryboard.slug}.wav`,
+    `bgm_${validatedStoryboard.slug}.mp3`,
+    `bgm.wav`,
+    `bgm.mp3`,
+  ];
+
+  for (const candidate of candidateBgmFiles) {
+    const candidatePath = path.join(audioDir, candidate);
+    if (fs.existsSync(candidatePath)) {
+      const publicAudioDir = path.join("public", "runs", validatedStoryboard.slug, "audio");
+      if (!fs.existsSync(publicAudioDir)) {
+        fs.mkdirSync(publicAudioDir, { recursive: true });
+      }
+      fs.copyFileSync(candidatePath, path.join(publicAudioDir, candidate));
+      bgmConfig = {
+        file: path.posix.join("runs", validatedStoryboard.slug, "audio", candidate),
+        volume: validatedStoryboard.isInstrumental ? 0.85 : 0.08,
+        loop: false,
+        fadeInFrames: 30,
+        fadeOutFrames: 45,
+      };
+      console.log(`🎶 Đã đồng bộ Master BGM riêng cho dự án: ${candidate}`);
+      break;
+    }
+  }
+
   const timelineData = {
     slug: validatedStoryboard.slug,
     title: validatedStoryboard.title,
@@ -285,13 +352,8 @@ function runBuildTimeline(storyboardPath: string, audioDir: string, outputPath: 
     height: 1080,
     totalDurationSec: roundedTotalSec,
     totalDurationInFrames,
-    bgm: {
-      file: "system-audio/bgm_ambient.wav",
-      volume: 0.08,
-      loop: true,
-      fadeInFrames: 30,
-      fadeOutFrames: 45,
-    },
+    isInstrumental: validatedStoryboard.isInstrumental,
+    bgm: bgmConfig,
     scenes: timelineScenes,
   };
 

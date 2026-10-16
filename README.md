@@ -1,54 +1,103 @@
-# Remotion video
+# CREATE-VIDEO: AUTOMATED VIDEO PRODUCTION FACTORY (V3.0)
+> **Nhà máy sản xuất video tự động hóa bằng Remotion, Microsoft Edge-TTS và Continuous Motion Pipeline.**
 
-<p align="center">
-  <a href="https://github.com/remotion-dev/logo">
-    <picture>
-      <source media="(prefers-color-scheme: dark)" srcset="https://github.com/remotion-dev/logo/raw/main/animated-logo-banner-dark.apng">
-      <img alt="Animated Remotion Logo" src="https://github.com/remotion-dev/logo/raw/main/animated-logo-banner-light.gif">
-    </picture>
-  </a>
-</p>
+Hệ thống cho phép tạo video Full HD 1080p @ 30fps chuyển động liên tục, kết hợp giọng đọc tiếng Việt mượt mà, chuyển cảnh tan chảy hữu cơ (Melting Dissolve), lớp hạt bụi khí quyển `<ParticleField />` và âm thanh môi trường Master Drone 120s.
 
-Welcome to your Remotion project!
+---
 
-## Commands
+## 💻 YÊU CẦU TIÊN QUYẾT (PREREQUISITES)
 
-**Install Dependencies**
+Trước khi bắt đầu, máy tính của bạn cần cài đặt sẵn:
 
-```console
-npm i --loglevel=error
+1. **Node.js:** Phiên bản **v18+** hoặc **v20+ LTS** (Khuyến nghị Node.js 20 hoặc 22). Kiểm tra bằng: `node -v`.
+2. **Git:** Để tải và cập nhật mã nguồn.
+3. **Python 3.8+:** Cần thiết nếu bạn muốn chạy tính năng sinh giọng đọc thuyết minh tự động bằng Microsoft Edge-TTS.
+
+---
+
+## 🚀 HƯỚNG DẪN CÀI ĐẶT & SỬ DỤNG (QUICK START)
+
+### Bước 1: Clone kho mã nguồn về máy
+```bash
+git clone <URL_REPO_CUA_BAN>
+cd Create-Video
 ```
 
-**Start Preview**
+### Bước 2: Cài đặt các thư viện Node.js
+```bash
+npm install
+```
 
-```console
+### Bước 3: Cài đặt công cụ tạo giọng đọc Edge-TTS (Python)
+```bash
+pip install edge-tts
+```
+
+### Bước 4 (Tùy chọn): Cấu hình API sinh Clip tự động
+Nếu bạn muốn sử dụng tính năng tự động sinh video clip bằng Pollinations AI:
+1. Sao chép file cấu hình mẫu:
+   ```bash
+   cp .env.example .env
+   # Hoặc trên Windows PowerShell:
+   copy .env.example .env
+   ```
+2. Mở file `.env` và điền khóa API của bạn:
+   ```env
+   POLLINATIONS_API_KEY=sk_...
+   ```
+*(Lưu ý: Nếu bạn chỉ xem trước trên trình duyệt hoặc tự ghép video bằng tay qua Google Veo thì KHÔNG cần bước này).*
+
+---
+
+## 🎬 CÁC LỆNH VẬN HÀNH CHÍNH
+
+### 1. Mở giao diện tương tác Remotion Studio (Xem trước trên Web)
+```bash
 npm run dev
 ```
+Trình duyệt sẽ tự động mở `http://localhost:3000`. Bạn có thể kéo thanh timeline, xem trước chuyển động, âm thanh và hiệu ứng tan chảy trực tiếp.
 
-**Render video**
-
-```console
-npx remotion render
+### 2. Sinh giọng đọc thuyết minh tiếng Việt
+```bash
+npm run voiceover -- runs/natural-cycle-v2/storyboard.json
 ```
 
-**Upgrade Remotion**
+### 3. Tự động sinh video clip bằng AI
+```bash
+# Chạy thử nghiệm Pilot 1 shot:
+npm run generate:clip -- --run natural-cycle-v2 --pilot
 
-```console
-npx remotion upgrade
+# Sinh toàn bộ 12 shot:
+npm run generate:clip -- --run natural-cycle-v2
 ```
 
-## Docs
+### 4. Xuất file video MP4 hoàn chỉnh (Render)
+```bash
+npm run render -- natural-cycle-v2
+```
+File video hoàn chỉnh sẽ được lưu tại: `runs/natural-cycle-v2/out/natural-cycle-v2.mp4`.
 
-Get started with Remotion by reading the [fundamentals page](https://www.remotion.dev/docs/the-fundamentals).
+---
 
-## Help
+## 📁 CẤU TRÚC THƯ MỤC DỰ ÁN
 
-We provide help on our [Discord server](https://discord.gg/6VzzNDwUwV).
+- **`src/`:** Mã nguồn React/Remotion (Scenes, Audio, Transitions, ParticleField).
+- **`scripts/`:** Bộ công cụ kỹ thuật tự động hóa:
+  - `generate_clip.ts`: Resolver nguồn clip (Veo cục bộ $\rightarrow$ Pollinations API $\rightarrow$ Pending).
+  - `check_clip.ts` & `check_motion.ts`: Kiểm định kỹ thuật, đo độ phân giải, quét đơ tĩnh và crop 4 góc soi watermark.
+  - `extract_last_frame.ts`: Trích xuất khung hình cuối làm bàn đạp cho cảnh tiếp theo.
+  - `generate_voiceover.ts`: Sinh audio & subtitle tiếng Việt qua Edge-TTS.
+- **`runs/natural-cycle-v2/`:** Thư mục dữ liệu sản xuất dự án:
+  - `shot-list.md`: Danh mục 12 shot kèm Prompt chuẩn Google Veo / AI Video.
+  - `timeline.json`: Nguồn chân lý điều khiển toàn bộ timeline video.
+  - `media/anchors/`: Bộ ảnh gốc chất lượng cao chống trôi phong cách.
+- **`docs/`:** Tài liệu kỹ thuật:
+  - [docs/b-workflow.md](docs/b-workflow.md): Sổ tay hướng dẫn người điều hành tự sinh clip bằng Google Veo.
+  - [docs/system-report.md](docs/system-report.md): Báo cáo kiến trúc hệ thống toàn diện.
+  - [docs/video-api-benchmark.md](docs/video-api-benchmark.md): Báo cáo đo lường chất lượng và quota API.
 
-## Issues
+---
 
-Found an issue with Remotion? [File an issue here](https://github.com/remotion-dev/remotion/issues/new).
-
-## License
-
-Note that for some entities a company license is needed. [Read the terms here](https://github.com/remotion-dev/remotion/blob/main/LICENSE.md).
+## 🔒 LƯU Ý BẢO MẬT KHI ĐẨY LÊN GITHUB
+- File `.env` chứa secret key đã được cấu hình trong `.gitignore` để không bao giờ bị đẩy lên GitHub.
+- Thư mục bộ nhớ cache tạm thời và media xuất ra ngoài cũng được bảo vệ tự động.

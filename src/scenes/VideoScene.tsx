@@ -46,11 +46,13 @@ export const VideoScene: React.FC<VideoSceneProps> = ({
 
   // Xử lý tự động lặp lại (Auto-loop) nếu thời lượng clip ngắn hơn cảnh
   const clipFrames = visual?.clipDurationInFrames;
-  const shouldLoop = clipFrames && clipFrames > 0 && clipFrames < totalFrames;
+  const shouldLoop = !!(clipFrames && clipFrames > 0 && clipFrames < totalFrames);
+  const playbackRate = visual?.playbackRate || 0.75;
 
   const renderVideoElement = () => (
     <OffthreadVideo
       src={staticFile(cleanFile)}
+      playbackRate={playbackRate}
       muted={true}
       style={{
         width: "100%",
@@ -87,7 +89,7 @@ export const VideoScene: React.FC<VideoSceneProps> = ({
           }}
         >
           {shouldLoop ? (
-            <Loop durationInFrames={clipFrames}>
+            <Loop durationInFrames={clipFrames!}>
               {renderVideoElement()}
             </Loop>
           ) : (
@@ -135,19 +137,21 @@ export const VideoScene: React.FC<VideoSceneProps> = ({
         </div>
       )}
 
-      {/* 2. Lớp phủ Gradient Scrim bảo vệ chữ & phụ đề */}
-      <div
-        style={{
-          position: "absolute",
-          top: 0,
-          left: 0,
-          width: "100%",
-          height: "100%",
-          background:
-            "linear-gradient(to top, rgba(11, 15, 25, 0.95) 0%, rgba(11, 15, 25, 0.35) 45%, rgba(11, 15, 25, 0.75) 100%)",
-          pointerEvents: "none",
-        }}
-      />
+      {/* 2. Lớp phủ Gradient Scrim bảo vệ chữ & phụ đề (chỉ hiển thị khi thực sự có text) */}
+      {!!(onScreenText.title || onScreenText.subtitle || (subtitles && subtitles.length > 0)) && (
+        <div
+          style={{
+            position: "absolute",
+            top: 0,
+            left: 0,
+            width: "100%",
+            height: "100%",
+            background:
+              "linear-gradient(to top, rgba(11, 15, 25, 0.95) 0%, rgba(11, 15, 25, 0.35) 45%, rgba(11, 15, 25, 0.75) 100%)",
+            pointerEvents: "none",
+          }}
+        />
+      )}
 
       {/* 3. Tiêu đề / Nội dung chữ phía trên */}
       <div

@@ -115,8 +115,17 @@ function main() {
   console.log(`🎯 Dải từ hợp lệ được tính toán: ${minAllowedWords} – ${maxAllowedWords} từ (Chuẩn: ~${targetWords} từ)`);
   console.log(`------------------------------------------------------`);
 
-  // Đối với smoke-test (thời lượng ngắn <= 20s), áp dụng dung sai mở rộng
-  if (isSmokeTest) {
+  const isInstrumental = args.includes("--instrumental") || rawData.isInstrumental === true;
+
+  if (isInstrumental) {
+    console.log(`🎼 Chế độ: Phim thuần nghệ thuật thị giác / Instrumental (Không ràng buộc từ thoại)`);
+    const totalEstimatedSec = scenes.reduce((acc: number, s: any) => acc + (s.estimatedDurationSec || 0), 0);
+    console.log(`⏱️ Tổng thời lượng phân cảnh dự kiến: ${totalEstimatedSec}s (Mục tiêu: ${targetDurationSec}s)`);
+    if (Math.abs(totalEstimatedSec - targetDurationSec) > 10) {
+      console.error(`❌ Lỗi: Tổng thời lượng các cảnh (${totalEstimatedSec}s) lệch quá nhiều so với mục tiêu (${targetDurationSec}s).`);
+      process.exit(1);
+    }
+  } else if (isSmokeTest) {
     if (totalWords < 20 || totalWords > 120) {
       console.error(`❌ Lỗi: Tổng số từ (${totalWords}) nằm ngoài giới hạn cho phép của Smoke Test (20 – 120 từ).`);
       process.exit(1);
@@ -129,7 +138,7 @@ function main() {
     }
   }
 
-  console.log(`✅ Khối lượng lời đọc: ĐẠT CHUẨN XÁC THEO HIỆU CHUẨN THỰC TẾ`);
+  console.log(`✅ Khối lượng kịch bản: ĐẠT CHUẨN XÁC`);
 
   // 4. KIỂM ĐỊNH TÍNH TRUNG THỰC DỮ LIỆU & ĐỐI SOÁT BRIEF (FACT-CHECK V2.5)
   console.log(`\n------------------------------------------------------`);

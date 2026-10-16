@@ -74,8 +74,6 @@ async function main() {
 
   // 2. Phân trang Contact Sheet (Tối đa 6 ảnh / trang)
   const pageSize = 6;
-  const thumbWidth = 640;
-  const thumbHeight = 360;
   const totalPages = Math.ceil(files.length / pageSize);
 
   console.log(`📄 Phân chia ${files.length} ảnh thành ${totalPages} trang Contact Sheet (tối đa ${pageSize} ảnh/trang)...`);
@@ -84,46 +82,21 @@ async function main() {
     const pageFiles = files.slice(pageIdx * pageSize, (pageIdx + 1) * pageSize);
     const pageOutName = totalPages === 1 ? "contact_sheet.png" : `contact_sheet_p${pageIdx + 1}.png`;
     const pageOutPath = path.join(outDir, pageOutName);
-
-    let cmd = "";
-
-    if (pageFiles.length === 1) {
-      const singlePath = path.join(mediaDir, pageFiles[0]);
-      cmd = `npx remotion ffmpeg -y -i "${singlePath}" -vf "scale=${thumbWidth}:${thumbHeight}:force_original_aspect_ratio=increase,crop=${thumbWidth}:${thumbHeight}" "${pageOutPath}"`;
-    } else {
-      const cols = pageFiles.length <= 2 ? pageFiles.length : 3;
-      const inputArgs: string[] = [];
-      const filterInputs: string[] = [];
-      const layoutCoords: string[] = [];
-
-      pageFiles.forEach((file, idx) => {
-        const fullPath = path.join(mediaDir, file);
-        inputArgs.push(`-i "${fullPath}"`);
-
-        const colIndex = idx % cols;
-        const rowIndex = Math.floor(idx / cols);
-        const x = colIndex * thumbWidth;
-        const y = rowIndex * thumbHeight;
-        layoutCoords.push(`${x}_${y}`);
-
-        filterInputs.push(`[${idx}:v]scale=${thumbWidth}:${thumbHeight}:force_original_aspect_ratio=increase,crop=${thumbWidth}:${thumbHeight}[v${idx}]`);
-      });
-
-      const vInputs = pageFiles.map((_, i) => `[v${i}]`).join("");
-      const layoutStr = layoutCoords.join("|");
-      const filterComplex = `${filterInputs.join(";")};${vInputs}xstack=inputs=${pageFiles.length}:layout=${layoutStr}[out]`;
-
-      cmd = `npx remotion ffmpeg -y ${inputArgs.join(" ")} -filter_complex "${filterComplex}" -map "[out]" "${pageOutPath}"`;
-    }
+    const pageFullPaths = pageFiles.map((f) => path.join(mediaDir, f));
 
     try {
       console.log(`   ⏳ Đang render trang ${pageIdx + 1}/${totalPages} (${pageFiles.length} ảnh)...`);
-      execSync(cmd, { stdio: "pipe" });
+      const tmpJsonPath = path.join(outDir, `_contact_sheet_tmp_${pageIdx}.json`);
+      fs.writeFileSync(tmpJsonPath, JSON.stringify(pageFullPaths));
+      const scriptPath = path.join(process.cwd(), "scripts", "render_contact_sheet.py");
+      execSync(`python "${scriptPath}" "${tmpJsonPath.replace(/\\/g, "/")}" "${pageOutPath.replace(/\\/g, "/")}"`, { stdio: "pipe" });
+      if (fs.existsSync(tmpJsonPath)) {
+        fs.unlinkSync(tmpJsonPath);
+      }
 
       if (fs.existsSync(pageOutPath)) {
         const stats = fs.statSync(pageOutPath);
         console.log(`   ✅ Đã tạo: ${pageOutName} (${(stats.size / 1024).toFixed(1)} KB)`);
-        // Nếu có nhiều trang, tạo bản sao p1 thành contact_sheet.png cho tương thích
         if (totalPages > 1 && pageIdx === 0) {
           fs.copyFileSync(pageOutPath, contactSheetPath);
         }

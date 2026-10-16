@@ -1,0 +1,164 @@
+{
+  "slug": "natural-cycle",
+  "title": "NATURAL CYCLE",
+  "targetDurationSec": 120,
+  "isInstrumental": true,
+  "scenes": [
+    {
+      "id": "scene_01",
+      "type": "title",
+      "voiceoverText": "NATURAL CYCLE",
+      "onScreenText": {
+        "title": "NATURAL CYCLE"
+      },
+      "transition": "fade",
+      "estimatedDurationSec": 8
+    },
+    {
+      "id": "scene_02",
+      "type": "image",
+      "voiceoverText": "Sự hiện diện của hộp sọ lông vũ nguyên bản trên nền trắng tinh khiết.",
+      "onScreenText": {},
+      "visual": {
+        "type": "image",
+        "file": "scene_02_skull.jpg",
+        "fitMode": "cover",
+        "source": "own",
+        "license": "User Uploaded Art",
+        "attribution": "User Reference"
+      },
+      "transition": "fade",
+      "estimatedDurationSec": 12
+    },
+    {
+      "id": "scene_03",
+      "type": "image",
+      "voiceoverText": "Hộp sọ rạn nứt zigzag hữu cơ và vỡ vụn thành các hạt giống đen rơi xuống.",
+      "onScreenText": {},
+      "visual": {
+        "type": "image",
+        "file": "scene_03_cracking.jpg",
+        "fitMode": "cover",
+        "source": "ai",
+        "license": "ai-generated, unverified",
+        "attribution": "Generated from Skull Reference"
+      },
+      "transition": "fade",
+      "estimatedDurationSec": 18
+    },
+    {
+      "id": "scene_04",
+      "type": "image",
+      "voiceoverText": "Lớp đất đen dâng lên từ đáy khung hình vùi lấp các mảnh hạt giống.",
+      "onScreenText": {},
+      "visual": {
+        "type": "image",
+        "file": "scene_04_soil.jpg",
+        "fitMode": "cover",
+        "source": "ai",
+        "license": "ai-generated, unverified",
+        "attribution": "Generated from Skull Reference"
+      },
+      "transition": "fade",
+      "estimatedDurationSec": 12
+    },
+    {
+      "id": "scene_05",
+      "type": "image",
+      "voiceoverText": "Một mầm cây đen nhỏ bé vươn lên từ mặt đất với hai lá non hình lông vũ.",
+      "onScreenText": {},
+      "visual": {
+        "type": "image",
+        "file": "scene_05_seedling.jpg",
+        "fitMode": "cover",
+        "source": "ai",
+        "license": "ai-generated, unverified",
+        "attribution": "Organic Sprout on Soil"
+      },
+      "transition": "fade",
+      "estimatedDurationSec": 12
+    },
+    {
+      "id": "scene_06",
+      "type": "image",
+      "voiceoverText": "Ống kính zoom chậm rãi tiếp cận cận cảnh mầm cây non đang đón nhận sự sống.",
+      "onScreenText": {},
+      "visual": {
+        "type": "image",
+        "file": "scene_06_seedling_zoom.jpg",
+        "fitMode": "cover",
+        "source": "ai",
+        "license": "ai-generated, unverified",
+        "attribution": "Cinematic Close-up"
+      },
+      "transition": "fade",
+      "estimatedDurationSec": 10
+    },
+    {
+      "id": "scene_07",
+      "type": "image",
+      "voiceoverText": "Mầm cây lớn mạnh thành thân cây đại ngàn với các cành nhánh xương khô và tán lá lông vũ.",
+      "onScreenText": {},
+      "visual": {
+        "type": "image",
+        "file": "scene_07_tree_growing.jpg",
+        "fitMode": "cover",
+        "source": "ai",
+        "license": "ai-generated, unverified",
+        "attribution": "Surreal Tree Silhouette"
+      },
+      "transition": "fade",
+      "estimatedDurationSec": 18
+    },
+    {
+      "id": "scene_08",
+      "type": "image",
+      "voiceoverText": "Đúng 4 quả hình đầu lâu đơm hoa kết trái treo lơ lửng trên cành cây đại ngàn.",
+      "onScreenText": {},
+      "visual": {
+        "type": "image",
+        "file": "scene_08_tree_fruits.jpg",
+        "fitMode": "cover",
+        "source": "ai",
+        "license": "ai-generated, unverified",
+        "attribution": "Surreal Tree with 4 Skull Fruits"
+      },
+      "transition": "fade",
+      "estimatedDurationSec": 14
+    },
+    {
+      "id": "scene_09",
+      "type": "image",
+      "voiceoverText": "1 quả đầu lâu tách cành và rơi chầm chậm xuống đáy khung hình.",
+      "onScreenText": {},
+      "visual": {
+        "type": "image",
+        "file": "scene_09_fruit_falling.jpg",
+        "fitMode": "cover",
+        "source": "ai",
+        "license": "ai-generated, unverified",
+        "attribution": "Falling Skull Fruit"
+      },
+      "transition": "fade",
+      "estimatedDurationSec": 10
+    },
+    {
+      "id": "scene_10",
+      "type": "image",
+      "voiceoverText": "Trở về hộp sọ nguyên bản trên nền trắng tinh khiết khép lại vòng tuần hoàn bất tận.",
+      "onScreenText": {
+        "title": "THE END"
+      },
+      "visual": {
+        "type": "image",
+        "file": "scene_10_skull_return.jpg",
+        "fitMode": "cover",
+        "source": "own",
+        "license": "User Uploaded Art",
+        "attribution": "User Reference"
+      },
+      "transition": "fade",
+      "estimatedDurationSec": 6
+    }
+  ]
+}

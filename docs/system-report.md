@@ -398,4 +398,20 @@ Nhà máy sản xuất video Remotion `Create-Video` trên **Phiên bản 2.5 (D
 - **Âm thanh chuẩn mực & Mastering 2 giây:** Tích hợp Audio Ducking tự động và cơ chế Post-Render Audio Mastering 2 giây với `-c:v copy`, triệt tiêu hoàn toàn sự lãng phí thời gian khi phải re-render lại hình ảnh chỉ vì lệch vài dB âm thanh.
 - **Minh bạch kỹ thuật:** Đánh giá trung thực giới hạn và bản quyền phi thương mại của Piper TTS, cung cấp file mẫu nghe trực tiếp, cập nhật đúng phiên bản Git và đặt ngưỡng thời gian render thực tế $\le 10$ phút cho video 2 phút.
 
-Toàn bộ hệ thống code và tài liệu đã được cập nhật đồng bộ, vượt qua các đợt kiểm thử hồi quy và sẵn sàng cho đợt kiểm thử quy mô lớn 2 phút (`full-scale-report.md`).
+Toàn bộ hệ thống code và tài liệu đã được cập nhật đồng bộ, vượt qua các đợt kiểm thử hồi quy và đã hoàn thành đợt kiểm thử quy mô lớn 2 phút (`natural-cycle`) với kết quả đạt 100% các tiêu chuẩn kỹ thuật (chi tiết lưu tại [full-scale-report.md](file:///d:/project/Create-Video/docs/full-scale-report.md)).
+
+---
+
+## 8. PHỤ LỤC NÂNG CẤP V3.0: CONTINUOUS MOTION & TỰ ĐỘNG HÓA CLIP RESOLVER
+
+1. **Kiến trúc chuyển động liên tục (Continuous Motion Core):**
+   - Thay thế toàn bộ mô hình slide tĩnh bằng chuỗi 12 shot video chuyển động mượt mà liên tục ($L = 8.0$s, slow-motion playbackRate $0.75\times$, chuyển cảnh chồng lấn tan chảy Melting Cross-Dissolve $o = 1.0$s).
+   - Lớp vi hạt khí quyển `<ParticleField />` và âm thanh nền Master Drone liền mạch 120 giây.
+2. **Bộ giải quyết nguồn clip (Clip Resolver 3 cấp):**
+   - **Cấp (a):** Kiểm tra `media/shot_XX.mp4` trên đĩa cục bộ (tạo bằng Veo thủ công). Nếu có -> dùng luôn không gọi API.
+   - **Cấp (b):** Nếu chưa có -> Tải ảnh khung đầu lên Pollinations media storage chính thức và gọi API Pollinations sinh clip tự động.
+   - **Cấp (c):** Nếu lỗi / hết hạn mức -> Tự động đánh dấu `pending` trong `status.md`, không tự ý đổi dịch vụ.
+3. **Kết quả đo lường Pilot Video API:**
+   - Script thực thi: `scripts/generate_clip.ts` với cơ chế retry exponential backoff và bảo mật tuyệt đối API key qua `.env`.
+   - Kết quả đo đạc chi tiết lưu tại [docs/video-api-benchmark.md](file:///d:/project/Create-Video/docs/video-api-benchmark.md).
+
