@@ -134,22 +134,34 @@ async function main() {
 
     console.log(`   - Kích thước: ${width}x${height} (Tỉ lệ: ${ratio.toFixed(2)}:1)`);
 
-    // Kiểm tra độ phân giải & hệ số upscale tối đa 1.5x
-    let upscaleWarning = "";
-    if (width < 1920 || height < 1080) {
-      const scaleX = 1920 / Math.max(1, width);
-      const scaleY = 1080 / Math.max(1, height);
-      const scaleFactor = Math.max(scaleX, scaleY);
+    // 2.1. Tính toán hệ số Upscale tách biệt theo chế độ hiển thị (Cover vs Contain-Blur)
+    const fitMode = scene.visual?.fitMode || "cover";
+    const kenBurnsZoom = isImageScene ? 1.08 : 1.0;
+    let baseScale = 1.0;
 
-      if (scaleFactor <= 1.5) {
-        upscaleWarning = `Upscale x${scaleFactor.toFixed(2)}`;
-        console.warn(`   ⚠️ CẢNH BÁO UPSCALE: Kích thước (${width}x${height}) cần ${upscaleWarning} (cho phép tối đa 1.5x). Hệ thống sẽ upscale và crop cover.`);
+    if (isImageScene && fitMode === "contain-blur") {
+      // Chế độ contain-blur: Chủ thể nằm gọn trong khung hình, phần thừa phủ nền mờ
+      baseScale = Math.min(1920 / Math.max(1, width), 1080 / Math.max(1, height));
+    } else {
+      // Chế độ cover: Hình ảnh phải lấp đầy cả 1920x1080 (không viền đen)
+      baseScale = Math.max(1920 / Math.max(1, width), 1080 / Math.max(1, height));
+    }
+
+    const effectiveScale = baseScale * kenBurnsZoom;
+    let upscaleWarning = "";
+
+    if (baseScale > 1.0) {
+      if (effectiveScale <= 1.5) {
+        upscaleWarning = `Upscale x${effectiveScale.toFixed(2)} (${fitMode})`;
+        console.warn(`   ⚠️ CẢNH BÁO UPSCALE: Kích thước (${width}x${height}) ở chế độ ${fitMode} cần ${upscaleWarning} (cho phép tối đa 1.5x).`);
       } else {
-        console.error(`   ❌ [ĐỘ PHÂN GIẢI QUÁ THẤP]: Kích thước (${width}x${height}) đòi hỏi upscale x${scaleFactor.toFixed(2)} vượt ngưỡng tối đa 1.5x. Nguy cơ vỡ hạt hình ảnh nghiêm trọng!`);
+        console.error(
+          `   ❌ [ĐỘ PHÂN GIẢI QUÁ THẤP]: Kích thước (${width}x${height}) ở chế độ ${fitMode} đòi hỏi upscale x${effectiveScale.toFixed(2)} (vượt ngưỡng tối đa 1.5x tính cả Ken Burns). Nguy cơ vỡ hạt hình ảnh nghiêm trọng!`
+        );
         hasError = true;
       }
     } else {
-      console.log(`   - Độ phân giải: ✅ Đạt chuẩn Full HD trở lên (${width}x${height})`);
+      console.log(`   - Độ phân giải: ✅ Đạt chuẩn Full HD (${width}x${height}, hệ số co phóng x${effectiveScale.toFixed(2)} ở chế độ ${fitMode})`);
     }
 
     // Kiểm tra tỉ lệ 16:9

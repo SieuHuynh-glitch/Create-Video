@@ -130,6 +130,94 @@ function main() {
   }
 
   console.log(`✅ Khối lượng lời đọc: ĐẠT CHUẨN XÁC THEO HIỆU CHUẨN THỰC TẾ`);
+
+  // 4. KIỂM ĐỊNH TÍNH TRUNG THỰC DỮ LIỆU & ĐỐI SOÁT BRIEF (FACT-CHECK V2.5)
+  console.log(`\n------------------------------------------------------`);
+  console.log(`🔍 KIỂM ĐỊNH DỮ KIỆN & CHỐNG ẢO GIÁC SỐ LIỆU (FACT-CHECK)`);
+  console.log(`------------------------------------------------------`);
+
+  // Tìm tệp brief.md tương ứng
+  const runDir = path.dirname(storyboardPath);
+  let briefPath = path.join(runDir, "brief.md");
+  if (!fs.existsSync(briefPath)) {
+    briefPath = path.join("briefs", `${storyboard.slug}.md`);
+  }
+
+  if (!fs.existsSync(briefPath)) {
+    console.warn(`⚠️ Cảnh báo: Không tìm thấy file brief.md tại "${briefPath}". Vui lòng tạo brief.md để đối soát dữ kiện.`);
+  } else {
+    const briefContent = fs.readFileSync(briefPath, "utf-8");
+    const hallucinatedNumbers: Array<{ sceneId: string; number: string; context: string }> = [];
+
+    // Regex trích xuất tất cả các số (số nguyên, số thập phân, phần trăm, năm)
+    const numberRegex = /\b\d+(?:[.,]\d+)?%?\b/g;
+
+    scenes.forEach((scene) => {
+      // Tập hợp toàn bộ văn bản hiển thị và lời đọc của cảnh
+      const textsToCheck: Array<{ field: string; text: string }> = [
+        { field: "voiceoverText", text: scene.voiceoverText || "" },
+        { field: "title", text: scene.onScreenText?.title || "" },
+        { field: "subtitle", text: scene.onScreenText?.subtitle || "" },
+        { field: "statNumber", text: scene.onScreenText?.statNumber || "" },
+        { field: "callToAction", text: scene.onScreenText?.callToAction || "" },
+        { field: "quoteText", text: scene.onScreenText?.quoteText || "" },
+        ...(scene.onScreenText?.bulletPoints || []).map((b, idx) => ({
+          field: `bulletPoint_${idx + 1}`,
+          text: b,
+        })),
+      ];
+
+      textsToCheck.forEach(({ field, text }) => {
+        const matches = text.match(numberRegex);
+        if (matches) {
+          matches.forEach((num) => {
+            // Loại bỏ các số nhỏ thuần mô tả cấu trúc cảnh nếu có (như "cảnh 1", "bước 1")
+            // Kiểm tra số xuất hiện nguyên văn trong brief
+            const cleanNum = num.trim();
+            if (!briefContent.includes(cleanNum)) {
+              // Thử kiểm tra dạng số không có dấu % nếu trong brief ghi riêng
+              const numWithoutPercent = cleanNum.replace("%", "");
+              if (!briefContent.includes(numWithoutPercent)) {
+                hallucinatedNumbers.push({
+                  sceneId: scene.id,
+                  number: cleanNum,
+                  context: `[${field}] "${text}"`,
+                });
+              }
+            }
+          });
+        }
+      });
+
+      // Nếu cảnh là StatScene, bắt buộc phải có trường source và source phải trỏ tới brief
+      if (scene.type === "stat") {
+        const source = scene.onScreenText?.source;
+        if (!source || source.trim().length === 0) {
+          console.error(`❌ Lỗi Cảnh [${scene.id}] (stat): Thiếu trường 'source' ghi rõ nguồn gốc dữ liệu.`);
+          process.exit(1);
+        }
+        // Kiểm tra nguồn có xuất hiện trong brief không
+        const sourceKeyword = source.replace(/^Nguồn:\s*/i, "").trim();
+        if (!briefContent.toLowerCase().includes(sourceKeyword.toLowerCase())) {
+          console.error(`❌ Lỗi Cảnh [${scene.id}] (stat): Nguồn '${source}' không xuất hiện trong brief.md.`);
+          console.error(`👉 Nguồn dữ liệu phải trích dẫn trực tiếp từ brief, không tự nghĩ ra.`);
+          process.exit(1);
+        }
+      }
+    });
+
+    if (hallucinatedNumbers.length > 0) {
+      console.error(`❌ CỔNG 1 THẤT BẠI: Phát hiện ${hallucinatedNumbers.length} số liệu lạ KHÔNG có trong brief.md:`);
+      hallucinatedNumbers.forEach((h) => {
+        console.error(`   - Cảnh [${h.sceneId}]: Số "${h.number}" trong ${h.context}`);
+      });
+      console.error(`👉 Quy tắc nghiêm ngặt: Mọi số liệu phải được định nghĩa trước trong mục '## Dữ kiện / Số liệu' của brief.md!`);
+      process.exit(1);
+    }
+
+    console.log(`✅ Fact-Check: 100% số liệu và nguồn gốc đã được xác thực nguyên văn với brief.md.`);
+  }
+
   console.log(`\n🎉 CỔNG 1 (VALIDATE STORYBOARD): PASSED HOÀN TOÀN!`);
   process.exit(0);
 }

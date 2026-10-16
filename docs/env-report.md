@@ -1,6 +1,6 @@
 # Báo Cáo Môi Trường & Công Cụ (Environment Report)
 
-*Thời điểm hoàn thành kiểm thử: 2026-10-16 (Phiên bản 2.4 - Enterprise Precision & Production Hardened)*
+*Thời điểm hoàn thành kiểm thử: 2026-10-16 (Phiên bản 2.5 - Design Refinement & Zero-Flaw Hardening)*
 
 Tài liệu này ghi nhận phiên bản của tất cả các công cụ, thư viện và thành phần trong đường ống sản xuất video ("Nhà máy sản xuất video").
 
@@ -16,7 +16,7 @@ Tài liệu này ghi nhận phiên bản của tất cả các công cụ, thư 
 | **Python** | `3.13.15` | Sẵn sàng | Python 3 runtime cho Edge-TTS & Helper scripts |
 | **pip** | `26.2.1` | Sẵn sàng | Package installer cho Python |
 | **tsx** | `4.23.15` | Sẵn sàng | TypeScript executor cho các script kiểm định |
-| **Git** | `2.x` | Sẵn sàng | Quản lý phiên bản mã nguồn & phòng ngừa mất dữ liệu |
+| **Git** | `2.54.0.windows.1` | Sẵn sàng | Quản lý phiên bản mã nguồn & phòng ngừa mất dữ liệu |
 
 ---
 
@@ -30,6 +30,7 @@ Tài liệu này ghi nhận phiên bản của tất cả các công cụ, thư 
 | **@remotion/transitions** | `4.0.535` | Hiệu ứng chuyển cảnh giữa các Scene |
 | **@remotion/media-utils** | `4.0.535` | Tiện ích phân tích độ dài audio/video |
 | **@remotion/renderer** | `4.0.535` | Bộ render video Chromium & compositor |
+| **@remotion/layout-utils** | `4.0.535` | Đo đạc kích thước văn bản DOM chính xác cấp subpixel |
 | **zod** | `4.5.4` | Chuẩn dữ liệu được Remotion 4.0.535 hỗ trợ chính thức |
 | **react** | `19.2.3` | React engine |
 | **react-dom** | `19.2.3` | React DOM engine |
@@ -71,9 +72,9 @@ Tài liệu này ghi nhận phiên bản của tất cả các công cụ, thư 
 Cả hai nguồn thư mục kỹ năng đều được môi trường Antigravity nhận diện và kích hoạt đồng thời:
 - **Kỹ năng chuẩn Remotion (`.agents/skills/`):** 12 kỹ năng chuyên sâu (`remotion-create`, `remotion-render`, `remotion-studio`, `remotion-markup`, v.v.).
 - **6 Kỹ năng Pipeline cốt lõi (`.agent/skills/`):**
-  1. `script-to-storyboard`: Chuyển đổi brief thành kịch bản tiếng Việt và storyboard.json (Viral Hook 3s đầu, Storybeat 5 chặng, danh mục số liệu/nguồn bắt buộc).
-  2. `shot-list`: Phân tích kịch bản tạo danh mục cảnh quay, Style Bible và prompt 5 lớp điện ảnh (lọc sạch tag rác).
+  1. `script-to-storyboard`: Chuyển đổi brief thành kịch bản tiếng Việt và storyboard.json (Viral Hook 3s đầu, Storybeat 5 chặng, Fact-Check số liệu & nguồn bắt buộc).
+  2. `shot-list`: Phân tích kịch bản tạo danh mục cảnh quay, Style Bible và prompt 5 lớp điện ảnh (lọc sạch tag rác, Contact Sheet phân trang $\le 6$ ảnh/trang và crop 1:1 góc dưới phải bắt watermark).
   3. `edge-tts-voiceover`: Tự động sinh giọng đọc Edge-TTS tiếng Việt và phụ đề .vtt với tham số điều tốc `--rate`.
-  4. `scene-builder`: Áp dụng thư viện 7 mẫu cảnh chuẩn (`Title`, `Bullets`, `Stat` có nguồn, `Quote`, `Outro`, `ImageScene` contain-blur, `VideoScene`).
-  5. `video-qa`: Quy trình 5 cổng kiểm soát chất lượng tự động (validate storyboard WPM thực tế, check media ffprobe, auto-tune timeline, visual QA adaptive 85% & pixel overflow, audio QA EBU R128).
+  4. `scene-builder`: Áp dụng thư viện 7 mẫu cảnh chuẩn (`Title`, `Bullets`, `Stat` có nguồn đối soát, `Quote`, `Outro`, `ImageScene` contain-blur/cover, `VideoScene`).
+  5. `video-qa`: Quy trình 5 cổng kiểm soát chất lượng tự động: Cổng 1 Fact-Check số liệu & WPM; Cổng 2 Media Upscale tách biệt Cover/Contain-blur; Cổng 3 Timeline Auto-tune; Cổng 4 Visual QA đo DOM subpixel thật (`@remotion/layout-utils`); Cổng 5 Audio QA EBU R128 kèm kỹ thuật Post-Render Audio Mastering 2 giây.
   6. `social-publisher`: Tự động hóa xuất bản bộ tài liệu marketing và SEO `social.md` (YouTube Chapters/Timestamps, CTR titles, tags).

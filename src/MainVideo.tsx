@@ -115,18 +115,31 @@ export const MainVideo: React.FC<MainVideoProps> = ({
         position: "relative",
       }}
     >
-      {/* 1. Track BGM nền chạy liên tục toàn bộ video có fade in / fade out */}
+      {/* 1. Track BGM nền chạy liên tục toàn bộ video có fade in / fade out & Audio Ducking */}
       {bgmFile ? (
         <Audio
           src={staticFile(bgmFile)}
-          volume={(f) =>
-            interpolate(
+          volume={(f) => {
+            // Kiểm tra xem frame f có nằm trong khoảng phát giọng đọc của cảnh nào không
+            const isVoiceoverActive = (scenes || []).some((scene) => {
+              const start = (scene.startFrame ?? 0) + (scene.audioStartFrame ?? 6);
+              const duration =
+                scene.audioDurationInFrames ||
+                Math.max(1, (scene.durationInFrames ?? 1) - (scene.audioStartFrame ?? 6));
+              const end = start + duration;
+              return f >= start && f <= end;
+            });
+
+            // Audio Ducking: Khi có giọng đọc, hạ âm lượng BGM xuống 60% (khoảng 0.05) để tôn giọng nói
+            const baseVol = isVoiceoverActive ? bgmVolume * 0.6 : bgmVolume;
+
+            return interpolate(
               f,
               [0, 30, Math.max(31, totalVideoFrames - 45), totalVideoFrames],
-              [0, bgmVolume, bgmVolume, 0],
+              [0, baseVol, baseVol, 0],
               { extrapolateLeft: "clamp", extrapolateRight: "clamp" }
-            )
-          }
+            );
+          }}
           loop={bgm?.loop !== false}
         />
       ) : null}

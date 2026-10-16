@@ -1,6 +1,6 @@
-# Workflow: /produce <slug> (Phiên Bản 2.3 - Hybrid Zero-Touch)
+# Workflow: /produce <slug> (Phiên Bản 2.5 - Design Refinement & Zero-Flaw Hardening)
 
-Quy trình sản xuất video hoàn chỉnh tự động hóa từ brief đến file MP4 xuất xưởng và bộ tài liệu xuất bản đa kênh, tích hợp cơ chế nạp media tự động (Zero-Touch) và 4 cổng chất lượng nghiêm ngặt.
+Quy trình sản xuất video hoàn chỉnh tự động hóa từ brief đến file MP4 xuất xưởng và bộ tài liệu xuất bản đa kênh, tích hợp cơ chế nạp media tự động (Zero-Touch), Fact-Check dữ kiện, đo DOM subpixel thật, Contact Sheet + Corner Crops và 5 cổng chất lượng nghiêm ngặt.
 
 ---
 
@@ -14,10 +14,10 @@ Quy trình sản xuất video hoàn chỉnh tự động hóa từ brief đến 
    ```bash
    npx tsx scripts/validate_storyboard.ts runs/<slug>/storyboard.json
    ```
-   *(Nếu không đạt: tự động sửa tối đa 2 lần. Nếu vẫn fail thì dừng báo lỗi).*
+   *(Kiểm tra số từ động ~380 từ cho 120s và Fact-Check 100% con số đối chiếu nguyên văn với mục "Dữ kiện / Số liệu" trong brief.md. Nếu phát hiện số lạ, tự động sửa tối đa 2 lần. Vượt ngưỡng: Dừng báo lỗi).*
 4. Cập nhật `runs/<slug>/status.md`.
-5. ⛔ **[ĐIỂM DỪNG DUYỆT 1 - Phê duyệt Kịch bản]**:
-   - Trình bày tóm tắt kịch bản, số cảnh, tổng số từ và thời lượng dự kiến.
+5. ⛔ **[ĐIỂM DỪNG DUYỆT 1 - Phê duyệt Kịch bản & Fact-Check]**:
+   - Trình bày tóm tắt kịch bản, số cảnh, tổng số từ, thời lượng dự kiến và danh mục số liệu đối soát.
    - Chờ người dùng phản hồi duyệt trước khi tiếp tục.
 
 ---
@@ -33,15 +33,20 @@ Quy trình sản xuất video hoàn chỉnh tự động hóa từ brief đến 
    ```
    - Tự động tải toàn bộ ảnh minh họa về `runs/<slug>/media/`.
    - Tự động cập nhật metadata bản quyền vào `storyboard.json`.
-4. Thực thi kiểm định chất lượng và bản quyền media (**CỔNG MEDIA**):
+4. ⚡ **Tạo Contact Sheet phân trang và xuất ảnh crop 1:1 góc dưới phải:**
+   ```bash
+   npx tsx scripts/generate_contact_sheet.ts runs/<slug>/storyboard.json
+   ```
+   - Tạo `runs/<slug>/out/contact_sheet.png` (tối đa 6 ảnh/trang) và xuất crops `runs/<slug>/out/crops/`.
+5. Thực thi kiểm định chất lượng và bản quyền media (**CỔNG MEDIA**):
    ```bash
    npx tsx scripts/check_media.ts runs/<slug>/storyboard.json
    ```
-   - Xác thực kích thước $\ge 1920\times 1080$, tỉ lệ 16:9 và lập hồ sơ bản quyền `runs/<slug>/manifest.json`.
-5. ℹ️ **[ĐIỂM XÁC NHẬN NHANH 1.5 - Xem Trước Media]**:
-   - Trình bày danh sách ảnh đã tự động tải xong.
-   - Người dùng có thể nhấn xác nhận ngay (Zero-Touch) hoặc thay thế file tùy thích qua `/replace-media`.
-6. Cập nhật `runs/<slug>/status.md`.
+   - Xác thực tỉ lệ 16:9, công thức upscale chuẩn (Cover/Contain-blur $\le 1.5\times$) và lập hồ sơ bản quyền `runs/<slug>/manifest.json`.
+6. ⛔ **[ĐIỂM DỪNG DUYỆT 1.5 - Soát Contact Sheet & Corner Crops]**:
+   - Người vận hành mở xem `runs/<slug>/out/contact_sheet.png` và các ảnh crop trong `runs/<slug>/out/crops/` để kiểm tra watermark và dị tật hình ảnh.
+   - Nhấn phê duyệt hoặc thay thế file lỗi qua `/replace-media`.
+7. Cập nhật `runs/<slug>/status.md`.
 
 ---
 
@@ -76,23 +81,29 @@ Quy trình sản xuất video hoàn chỉnh tự động hóa từ brief đến 
 ## GIAI ĐOẠN 4: Dựng Toàn bộ Cảnh & Cổng QA Visual
 1. Sau khi người dùng duyệt Giai đoạn 3:
 2. Áp dụng template cho toàn bộ các cảnh còn lại trong `timeline.json`.
-3. Thực thi **CỔNG 3 (check_video QA với Adaptive 85% Sampling)**:
+3. Thực thi **CỔNG 3 (check_video QA với Adaptive 85% Sampling & Đo DOM Thật)**:
    ```bash
    npx tsx scripts/check_video.ts runs/<slug>/timeline.json
    ```
    - Chụp still tại 85% cho các cảnh animation (bullets, stat, quote, outro) và 50% cho cảnh tĩnh.
-   - Kiểm tra an toàn viền chữ, phụ đề đồng bộ, cảnh rỗng.
+   - Đo subpixel văn bản DOM Chromium (`@remotion/layout-utils`), đảm bảo font $\ge 48$px và không tràn vùng 1728px.
    - Xuất bảng kết quả chi tiết vào `runs/<slug>/status.md`.
 
 ---
 
-## GIAI ĐOẠN 5: Render Video An Toàn
+## GIAI ĐOẠN 5: Render Video An Toàn & Cổng Âm Thanh EBU R128
 1. Kích hoạt Render An Toàn (Tự động Re-sync Media, Concurrency 2, và Chống Bẫy Xóa Nhầm):
    ```bash
    npx tsx scripts/render_video.ts <slug> --clean
    ```
-2. Kiểm tra file MP4 xuất xưởng tại `runs/<slug>/out/<slug>.mp4`.
-3. Cập nhật trạng thái vào `runs/<slug>/status.md`.
+2. Thực thi **CỔNG 4 (check_audio)**:
+   ```bash
+   npx tsx scripts/check_audio.ts runs/<slug>/out/<slug>.mp4
+   ```
+   - Đo Integrated Loudness (-16 đến -14 LUFS), True Peak $\le -1.0$ dBFS, xác thực Audio Ducking 40%.
+   - Nếu âm thanh lệch chuẩn: Tự động chạy **Post-Render Mastering 2s** (`loudnorm` 2-pass, `-c:v copy`), không re-render video.
+3. Kiểm tra file MP4 xuất xưởng tại `runs/<slug>/out/<slug>.mp4`.
+4. Cập nhật trạng thái vào `runs/<slug>/status.md`.
 
 ---
 

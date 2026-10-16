@@ -32,3 +32,12 @@ forbidden_keywords:
 ## 3. Chỉ dẫn thị giác bổ sung (Visual Notes)
 - Bảng màu chủ đạo: Xanh neon & Xám than chì.
 - Font chữ: Rõ ràng, dễ đọc, không chân.
+
+## 4. Dữ kiện / Số liệu bắt buộc (Verified Facts & Data)
+- Mọi con số (%, năm, số thập phân, thống kê) xuất hiện trong video BẮT BUỘC phải được khai báo tại đây.
+- Agent KHÔNG ĐƯỢC PHÉP tự nghĩ ra số liệu; Cổng 1 (validate_storyboard) sẽ tự động đối soát và báo FAIL nếu phát hiện số lạ.
+- Ví dụ:
+  - Tăng trưởng: 45%
+  - Năm khảo sát: 2026
+  - Số người dùng: 10 triệu
+
