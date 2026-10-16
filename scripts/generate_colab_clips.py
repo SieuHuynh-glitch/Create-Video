@@ -17,18 +17,24 @@ if hasattr(sys.stdout, "reconfigure"):
 # Ngăn chặn phân mảnh VRAM trên PyTorch theo khuyến nghị chính thức
 os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "expandable_segments:True"
 
-# Nạp an toàn các thư viện AI (Có try-except để không crash hoặc báo lỗi linter trên máy local)
+# Nạp an toàn các thư viện AI (Có type: ignore để IDE không báo lỗi thiếu thư viện trên máy local)
 try:
-    import torch
-    from diffusers.utils import export_to_video, load_image
-    from diffusers import (
+    import torch  # type: ignore
+    from diffusers.utils import export_to_video, load_image  # type: ignore
+    from diffusers import (  # type: ignore
         StableVideoDiffusionPipeline,
         LTXImageToVideoPipeline,
         CogVideoXImageToVideoPipeline,
     )
     AI_LIBS_AVAILABLE = True
-except ImportError:
+except (ImportError, ModuleNotFoundError):
     AI_LIBS_AVAILABLE = False
+    torch = None  # type: ignore
+    export_to_video = None  # type: ignore
+    load_image = None  # type: ignore
+    StableVideoDiffusionPipeline = None  # type: ignore
+    LTXImageToVideoPipeline = None  # type: ignore
+    CogVideoXImageToVideoPipeline = None  # type: ignore
 
 # Thiết lập đường dẫn gốc
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
