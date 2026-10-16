@@ -7,4 +7,6 @@ export * from "./OutroScene";
 export * from "./ImageScene";
 export * from "./VideoScene";
 export * from "./LumaParallaxScene";
+export * from "./ContinuousMetamorphosisScene";
 export * from "./ParticleField";
+

@@ -65,3 +65,20 @@ Chào mừng bạn đến với Hệ thống Nhà máy Sản xuất Video tự �
 - **Lỗi tràn RAM trên Laptop 16GB:** Hệ thống đã mặc định cấu hình `Config.setConcurrency(2)` và cache video `512MB` trong `remotion.config.ts`. Ngưỡng thời gian render cho video 2 phút đặt mức thực tế $\le 10$ phút.
 - **Xem trước trực tiếp (Interactive Preview):**
   Chạy `npm run dev` để mở Remotion Studio trực quan trên trình duyệt tại `http://localhost:3000`.
+
+---
+
+## 6. Chế Độ Sản Xuất Tự Động Hoá Toàn Diện (AUTO MODE V4.1)
+
+Ngoài quy trình bán tự động có 3 chốt dừng duyệt, hệ thống hỗ trợ **AUTO MODE V4.1** chạy xuyên suốt từ đầu vào đến MP4 xuất xưởng không có điểm dừng:
+- **Lệnh sản xuất tự động Tầng 0 (Local CPU):**
+  ```bash
+  npm run make -- <slug> [--duration 120]
+  ```
+  *Bao gồm Bước 0 (audit_input + expand_references sinh bù ảnh neo FLUX.1), lập kế hoạch auto_plan, render LumaParallaxScene và kiểm định QA.*
+- **Lệnh nâng cấp Hybrid Video AI (Tầng 2 Colab Worker / B-Workflow Veo):**
+  ```bash
+  npm run upgrade:video -- <slug>
+  ```
+  *Bao gồm Bước 2.5 (chuẩn hóa One-Pass Lanczos 1080p @ 30fps), Motion QA tự sửa 2 lần qua check_clip.ts, và cơ chế Hạ Tầng Cục Bộ (Per-Shot Granular Fallback) chỉ hạ riêng shot lỗi về Tầng 0, bảo toàn 100% các shot đạt chuẩn.*
+- Chi tiết vận hành xem tại [docs/auto-mode.md](file:///d:/project/Create-Video/docs/auto-mode.md).

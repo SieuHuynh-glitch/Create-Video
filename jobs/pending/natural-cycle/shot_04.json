@@ -1,0 +1,18 @@
+{
+  "slug": "natural-cycle",
+  "shotId": "shot_04",
+  "sourceImage": "runs/natural-cycle/media/scene_05_seedling.jpg",
+  "inputImagePath": "D:\\project\\Create-Video\\runs\\natural-cycle\\media\\scene_05_seedling.jpg",
+  "prompt": "Surreal black ink painting on pure white background, tiny organic seedling sprouting upwards through soil, delicate spiraling stem, high contrast, continuous time-lapse motion",
+  "seed": 453,
+  "model": "Lightricks/LTX-Video",
+  "width": 704,
+  "height": 384,
+  "fps": 24,
+  "numFrames": 49,
+  "guidanceScale": 3.5,
+  "numSteps": 30,
+  "outputVideoPath": "jobs/done/natural-cycle/shot_04.mp4",
+  "status": "pending",
+  "createdAt": "2026-10-16T14:53:34.306Z"
+}

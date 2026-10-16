@@ -10,6 +10,7 @@ import {
   ImageScene,
   VideoScene,
   LumaParallaxScene,
+  ContinuousMetamorphosisScene,
   ParticleField,
 } from "./scenes";
 
@@ -18,7 +19,8 @@ export type MainVideoProps = Timeline;
 const SceneContent: React.FC<{
   scene: TimelineScene;
   idx: number;
-}> = ({ scene, idx }) => {
+  totalScenes: number;
+}> = ({ scene, idx, totalScenes }) => {
   const frame = useCurrentFrame();
   const overlapFrames = 30; // 1.0s melting overlap
   const opacity =
@@ -31,12 +33,16 @@ const SceneContent: React.FC<{
 
   return (
     <div style={{ width: "100%", height: "100%", opacity }}>
-      {renderSceneComponent(scene)}
+      {renderSceneComponent(scene, idx, totalScenes)}
     </div>
   );
 };
 
-function renderSceneComponent(scene: TimelineScene) {
+function renderSceneComponent(
+  scene: TimelineScene,
+  idx: number = 0,
+  totalScenes: number = 10
+) {
   const onScreenText = scene.onScreenText || {};
   const voiceoverText = scene.voiceoverText || "";
   const subtitles = scene.subtitles;
@@ -102,7 +108,37 @@ function renderSceneComponent(scene: TimelineScene) {
           subtitles={subtitles}
         />
       );
+    case "metamorphosis":
+      return (
+        <ContinuousMetamorphosisScene
+          onScreenText={onScreenText}
+          voiceoverText={voiceoverText}
+          visual={scene.visual}
+          durationInFrames={scene.durationInFrames}
+          subtitles={subtitles}
+          sceneIndex={idx}
+          totalScenes={totalScenes}
+        />
+      );
     case "luma-parallax":
+      // Nếu là ảnh nghệ thuật biến đổi đơn sắc hoặc có từ khóa continuous/natural-cycle thì dùng ContinuousMetamorphosisScene
+      if (
+        scene.visual?.file?.includes("natural-cycle") ||
+        scene.visual?.file?.includes("scene_") ||
+        scene.visual?.prompt?.includes("monochrome")
+      ) {
+        return (
+          <ContinuousMetamorphosisScene
+            onScreenText={onScreenText}
+            voiceoverText={voiceoverText}
+            visual={scene.visual}
+            durationInFrames={scene.durationInFrames}
+            subtitles={subtitles}
+            sceneIndex={idx}
+            totalScenes={totalScenes}
+          />
+        );
+      }
       return (
         <LumaParallaxScene
           onScreenText={onScreenText}
@@ -196,7 +232,7 @@ export const MainVideo: React.FC<MainVideoProps> = ({
             name={`${scene.id} (${scene.type})`}
           >
             {/* Visual Scene Content với Melting Dissolve Transition (1.0s = 30 frames) */}
-            <SceneContent scene={scene} idx={idx} />
+            <SceneContent scene={scene} idx={idx} totalScenes={scenes.length} />
 
             {/* Transition Whoosh SFX cho các cảnh chuyển tiếp (chỉ bật khi không phải instrumental) */}
             {!isInstrumentalVideo && idx > 0 ? (

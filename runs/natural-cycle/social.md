@@ -2,7 +2,7 @@
 
 - **Dự án (Slug):** `natural-cycle`
 - **Thời lượng video:** `02:00` (120.0 giây - 3600 frames @ 30fps)
-- **Tự động sinh lúc:** 11:48:01 16/10/2026
+- **Tự động sinh lúc:** 22:28:47 16/10/2026
 
 ---
 
@@ -25,15 +25,17 @@ Copy toàn bộ đoạn dưới đây và dán thẳng vào phần mô tả củ
 
 ```text
 TIMESTAMPS / MỤC LỤC VIDEO:
-00:00 - NATURAL CYCLE - Khám Phá: scene_02
-00:20 - Khám Phá: scene_03
-00:38 - Khám Phá: scene_04
-00:50 - Khám Phá: scene_05
-01:02 - Khám Phá: scene_06
-01:12 - Khám Phá: scene_07
-01:30 - Khám Phá: scene_08
-01:44 - Khám Phá: scene_09
-01:54 - THE END
+00:00 - NATURAL CYCLE
+00:10 - Khám Phá: shot_02
+00:20 - Khám Phá: shot_03
+00:30 - Khám Phá: shot_04
+00:40 - Khám Phá: shot_05
+00:50 - Khám Phá: shot_06
+01:00 - Khám Phá: shot_07
+01:10 - Khám Phá: shot_08 - Khám Phá: shot_09
+01:29 - Khám Phá: shot_10
+01:39 - Khám Phá: shot_11
+01:49 - INFINITE METAMORPHOSIS
 ```
 
 ---
@@ -46,15 +48,17 @@ TIMESTAMPS / MỤC LỤC VIDEO:
 Nếu bạn đang tìm kiếm giải pháp tối ưu, tiết kiệm thời gian và nâng cao chất lượng công việc thì đây chính là video dành riêng cho bạn!
 
 🔥 NỘI DUNG NỔI BẬT:
-• 00:00 : NATURAL CYCLE - Khám Phá: scene_02
-• 00:20 : Khám Phá: scene_03
-• 00:38 : Khám Phá: scene_04
-• 00:50 : Khám Phá: scene_05
-• 01:02 : Khám Phá: scene_06
-• 01:12 : Khám Phá: scene_07
-• 01:30 : Khám Phá: scene_08
-• 01:44 : Khám Phá: scene_09
-• 01:54 : THE END
+• 00:00 : NATURAL CYCLE
+• 00:10 : Khám Phá: shot_02
+• 00:20 : Khám Phá: shot_03
+• 00:30 : Khám Phá: shot_04
+• 00:40 : Khám Phá: shot_05
+• 00:50 : Khám Phá: shot_06
+• 01:00 : Khám Phá: shot_07
+• 01:10 : Khám Phá: shot_08 - Khám Phá: shot_09
+• 01:29 : Khám Phá: shot_10
+• 01:39 : Khám Phá: shot_11
+• 01:49 : INFINITE METAMORPHOSIS
 
 🔔 Đừng quên bấm LIKE, SHARE và ĐĂNG KÝ KÊNH để không bỏ lỡ những video hữu ích tiếp theo!
 💬 Để lại bình luận bên dưới câu hỏi hoặc góc nhìn của bạn nhé!

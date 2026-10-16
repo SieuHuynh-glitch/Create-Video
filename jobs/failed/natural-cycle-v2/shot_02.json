@@ -1,0 +1,6 @@
+{
+  "slug": "natural-cycle-v2",
+  "shotId": "shot_02",
+  "error": "CUDA Out of Memory (OOM) at Tier 4 fallback",
+  "timestamp": "2026-10-16T14:03:00Z"
+}

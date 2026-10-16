@@ -49,12 +49,13 @@ Tài liệu này ghi nhận phiên bản của tất cả các công cụ, thư 
 
 ---
 
-## 4. Công cụ Xử lý Đa phương tiện Hệ thống (FFmpeg / FFprobe)
+## 4. Công cụ Xử lý Đa phương tiện Hệ thống (FFmpeg / FFprobe & Python Companion)
 
 | Công cụ | Phiên bản / Vị trí | Trạng thái |
 | :--- | :--- | :--- |
-| **Remotion Embedded FFmpeg** | `v7.1` (Tích hợp sẵn qua `@remotion/cli`) | ✅ **Hoạt động hoàn hảo**<br>- Đầy đủ filter: `loudnorm` (Cổng 4 Audio QA), `silencedetect`, `xstack` (Contact Sheet)<br>- Đo kích thước thật bằng `ffprobe` |
-| **System FFmpeg (PATH)** | Chưa cài đặt trên hệ thống Windows | Không bắt buộc vì Remotion đã tích hợp sẵn đầy đủ bộ giải mã |
+| **Remotion Embedded FFmpeg** | `v7.1` (Tích hợp sẵn qua `@remotion/cli`) | ✅ **Hoạt động hoàn hảo**<br>- Biên dịch tối ưu với cờ `--disable-filters`, whitelist các bộ lọc thiết yếu: `scale`, `crop`, `loudnorm`, `colorspace`, `trim`, `concat`<br>- Đo kích thước thật bằng `ffprobe`<br>- Lưu ý: Các bộ lọc không có sẵn (`signalstats`, `unsharp`, `hue`, `colorlevels`) được ủy quyền cho module Python xử lý. |
+| **Python Companion Module** | Python `3.13.15` + `PIL 12.3.0` + `NumPy` | ✅ **Hoạt động hoàn hảo**<br>- Thực hiện đo đạc Visual DNA ($Y_{\text{avg}}$, $cornerY_{\text{avg}}$, $SAT_{\text{avg}}$) siêu tốc (<40ms)<br>- Chuẩn hóa dải sáng (Colorlevel Clamping: ép xám $\ge 220$ lên `#FFFFFF`, nét mực về `#000000`, $SAT=0.00$) qua `scripts/normalize_image.py`. |
+| **System FFmpeg (PATH)** | Chưa cài đặt trên hệ thống Windows | Không cần thiết vì đã có sự phối hợp giữa Remotion FFmpeg và Python. |
 
 ---
 
@@ -62,19 +63,22 @@ Tài liệu này ghi nhận phiên bản của tất cả các công cụ, thư 
 
 | Nhà cung cấp | Mô hình | Kích thước / Tỉ lệ | Chi phí & Hạn mức | Ứng dụng & Lưu ý |
 | :--- | :--- | :--- | :--- | :--- |
-| **Pollinations.ai** | `FLUX.1` / `SDXL` | `1920x1080` (16:9) | Miễn phí không cần API Key | Sinh ảnh AI tự động tại Giai đoạn 1.5. Giới hạn ẩn danh $\approx 1$ req/15s. Được rà soát watermark qua Contact Sheet tại Chốt 1.5. |
+| **Pollinations.ai (Image)** | `FLUX.1` / `SDXL` | `1920x1080` (16:9) | Miễn phí không cần API Key | Sinh ảnh neo thiếu tự động tại Bước 0 (`reference-expander`) và Giai đoạn 1.5. Giới hạn ẩn danh $\approx 1$ req/15s. |
+| **Pollinations.ai (Video)** | 22 Video Models | 16:9 Video | **Chặn 100% (`paid_only: true`)** | Đã kích hoạt **Fast-Skip 0ms** để chuyển sang Tầng 2 (Colab Worker LTX-Video) hoặc B-Workflow (Veo). |
 | **Google AI Studio** *(Tùy chọn)* | `Gemini 2.5 Flash / Pro` | Text / Multimodal | Free tier (Yêu cầu API Key cá nhân miễn phí) | Hỗ trợ phân tích kịch bản mở rộng khi người dùng cấu hình key riêng. Mặc định nhà máy không phụ thuộc key này. |
 
 ---
 
-## 6. Danh sách Agent Skills đã tích hợp (Phiên Bản 2.4)
+## 6. Danh sách Agent Skills đã tích hợp (Phiên Bản V4.1)
 
 Cả hai nguồn thư mục kỹ năng đều được môi trường Antigravity nhận diện và kích hoạt đồng thời:
 - **Kỹ năng chuẩn Remotion (`.agents/skills/`):** 12 kỹ năng chuyên sâu (`remotion-create`, `remotion-render`, `remotion-studio`, `remotion-markup`, v.v.).
-- **6 Kỹ năng Pipeline cốt lõi (`.agent/skills/`):**
-  1. `script-to-storyboard`: Chuyển đổi brief thành kịch bản tiếng Việt và storyboard.json (Viral Hook 3s đầu, Storybeat 5 chặng, Fact-Check số liệu & nguồn bắt buộc).
-  2. `shot-list`: Phân tích kịch bản tạo danh mục cảnh quay, Style Bible và prompt 5 lớp điện ảnh (lọc sạch tag rác, Contact Sheet phân trang $\le 6$ ảnh/trang và crop 1:1 góc dưới phải bắt watermark).
-  3. `edge-tts-voiceover`: Tự động sinh giọng đọc Edge-TTS tiếng Việt và phụ đề .vtt với tham số điều tốc `--rate`.
-  4. `scene-builder`: Áp dụng thư viện 7 mẫu cảnh chuẩn (`Title`, `Bullets`, `Stat` có nguồn đối soát, `Quote`, `Outro`, `ImageScene` contain-blur/cover, `VideoScene`).
-  5. `video-qa`: Quy trình 5 cổng kiểm soát chất lượng tự động: Cổng 1 Fact-Check số liệu & WPM; Cổng 2 Media Upscale tách biệt Cover/Contain-blur; Cổng 3 Timeline Auto-tune; Cổng 4 Visual QA đo DOM subpixel thật (`@remotion/layout-utils`); Cổng 5 Audio QA EBU R128 kèm kỹ thuật Post-Render Audio Mastering 2 giây.
-  6. `social-publisher`: Tự động hóa xuất bản bộ tài liệu marketing và SEO `social.md` (YouTube Chapters/Timestamps, CTR titles, tags).
+- **8 Kỹ năng Pipeline cốt lõi (`.agent/skills/`):**
+  1. `input-auditor` (MỚI V4.1): Thẩm định brief đầu vào, tự động nhận diện chế độ âm thanh (`audioMode: "ambient-only" | "voiceover"`), trích xuất Hợp đồng Dữ kiện (`allowedNumbers`), và mở rộng kịch bản đạt chuẩn không phát sinh số lạ.
+  2. `reference-expander` (MỚI V4.1): Đánh giá số lượng và Visual DNA ảnh gốc (`HIGH_KEY_MONOCHROME_WHITE_BG` vs `COLOR_DYNAMIC`). Tự động sinh bù ảnh neo thiếu bằng Pollinations Image FLUX.1 miễn phí vào `runs/<slug>/media/generated_anchors/`.
+  3. `script-to-storyboard`: Chuyển đổi brief thành kịch bản tiếng Việt và storyboard.json (Viral Hook 3s đầu, Storybeat 5 chặng, Fact-Check số liệu & nguồn bắt buộc).
+  4. `shot-list`: Phân tích kịch bản tạo danh mục cảnh quay, Style Bible và prompt 5 lớp điện ảnh (lọc sạch tag rác, Contact Sheet phân trang $\le 6$ ảnh/trang và crop 1:1 góc dưới phải bắt watermark).
+  5. `edge-tts-voiceover`: Tự động sinh giọng đọc Edge-TTS tiếng Việt và phụ đề .vtt với tham số điều tốc `--rate`.
+  6. `scene-builder`: Áp dụng thư viện 7 mẫu cảnh chuẩn (`Title`, `Bullets`, `Stat` có nguồn đối soát, `Quote`, `Outro`, `ImageScene` contain-blur/cover, `VideoScene` kèm dynamic camera ease).
+  7. `video-qa`: Quy trình 5 cổng kiểm soát chất lượng tự động: Cổng 1 Fact-Check số liệu & WPM; Cổng 2 Media Upscale tách biệt Cover/Contain-blur; Cổng 3 Timeline Auto-tune; Cổng 4 Visual QA đo DOM subpixel thật (`@remotion/layout-utils`); Cổng 5 Audio QA EBU R128 kèm kỹ thuật Post-Render Audio Mastering 2 giây.
+  8. `social-publisher`: Tự động hóa xuất bản bộ tài liệu marketing và SEO `social.md` (YouTube Chapters/Timestamps, CTR titles, tags).

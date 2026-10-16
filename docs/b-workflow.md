@@ -46,24 +46,33 @@ Tài liệu này là sổ tay vận hành dành cho bạn (Người điều hàn
    runs/natural-cycle-v2/media/shot_XX.mp4
    ```
 
-### Bước 4: Chạy Lệnh Hậu Kỳ Tự Động (Antigravity IDE)
-Sau khi thả file `shot_XX.mp4` vào thư mục media, hãy chạy 2 lệnh kỹ thuật:
+### Bước 4: Chạy Lệnh Hậu Kỳ Tự Động & Chuẩn Hóa V4.1 (Antigravity IDE)
+Sau khi thả file `shot_XX.mp4` vào thư mục media, hãy chạy các lệnh kỹ thuật:
 
-1. **Trích xuất khung hình cuối cho shot tiếp theo:**
+1. **Chuẩn hóa thị giác One-Pass (Bước 2.5):**
+   ```bash
+   npx tsx scripts/normalize_visuals.ts runs/natural-cycle-v2/media/shot_XX.mp4 runs/natural-cycle-v2/media/shot_XX_norm.mp4 --dna=HIGH_KEY_MONOCHROME_WHITE_BG
+   ```
+   *Lệnh này thực hiện trong 1 pass: Lanczos 1080p, nội suy 30fps, khử sạch ám màu và tách toàn bộ track audio rác (-an).*
+
+2. **Trích xuất khung hình cuối cho shot tiếp theo:**
    ```bash
    npx tsx scripts/extract_last_frame.ts runs/natural-cycle-v2/media/shot_XX.mp4
    ```
    *Lệnh này sẽ tự sinh tệp `runs/natural-cycle-v2/media/frame_start_for_shot_XX+1.jpg`.*
 
-2. **Kiểm định kỹ thuật & crop 4 góc soi watermark:**
+3. **Kiểm định kỹ thuật V4.1 & Cơ chế Tự Sửa 2 Lần (Motion QA):**
    ```bash
    npx tsx scripts/check_clip.ts runs/natural-cycle-v2/media/shot_XX.mp4
    ```
    *Lệnh này sẽ:*
    - Đo phân giải, fps, thời lượng thật bằng `ffprobe`.
    - Kiểm tra `freezedetect` xem clip có bị đơ tĩnh $> 1.0$s không.
-   - Trích xuất 4 ảnh crop 1:1 ở 4 góc vào `runs/natural-cycle-v2/out/crops/shot_XX_corner_*.png`.
-   - Cập nhật thông số vào `manifest.json`.
+   - Tự sửa Lần 1: Cắt bỏ đoạn đơ đuôi (`trim`) và kéo giãn tốc độ phù hợp thời lượng shot.
+   - Tự sửa Lần 2: Bọc chuyển động camera easing động (`zoom_in` / `pan`) trên `VideoScene` để xóa cảm giác đứng hình.
+   - Nếu vẫn lỗi: Kích hoạt **Hạ tầng cục bộ (Per-Shot Fallback)** chỉ hạ riêng shot đó về Tầng 0 (`LumaParallaxScene`), bảo toàn 100% các shot đạt chuẩn khác.
+   - Trích xuất 4 ảnh crop 1:1 ở 4 góc vào `runs/natural-cycle-v2/out/crops/shot_XX_corner_*.png` để bạn soi watermark.
+   - Cập nhật thông số kỹ thuật và hồ sơ bản quyền vào `manifest.json`.
 
 ### Bước 5: Soát ảnh 4 góc & Duyệt Clip
 - Mở thư mục `runs/natural-cycle-v2/out/crops/` xem 4 góc ảnh.

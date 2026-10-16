@@ -269,15 +269,13 @@ export async function runGenerateClip(options: GenerateClipOptions) {
   console.log(`   Mô hình đích: ${model}`);
   console.log(`======================================================\n`);
 
-  // Kiểm tra API Key
+  // Kiểm tra API Key & Hạn mức (Quy tắc Fast-Skip Tầng 1 theo video-api-benchmark.md)
   const apiKey = getApiKey();
   if (!apiKey) {
-    console.error(`❌ LỖI NGHIÊM TRỌNG: Không tìm thấy POLLINATIONS_API_KEY hợp lệ trong file .env!`);
-    console.error(`👉 HƯỚNG DẪN:`);
-    console.error(`   1. Mở file .env ở thư mục gốc.`);
-    console.error(`   2. Điền: POLLINATIONS_API_KEY=sk_... (hoặc key bạn đã lấy từ enter.pollinations.ai/keys)`);
-    console.error(`   3. Lưu lại và chạy lại lệnh này.`);
-    process.exit(1);
+    console.log(`⚡ [FAST-SKIP TẦNG 1] (0ms): Không tìm thấy POLLINATIONS_API_KEY trả phí trong .env.`);
+    console.log(`   👉 Theo video-api-benchmark.md, 100% (22/22) mô hình Video đều là paid_only: true.`);
+    console.log(`   👉 Bỏ qua Tầng 1 ngay lập tức, giữ toàn bộ shot ở Tầng 0 (Luma Parallax) và sẵn sàng cho Tầng 2 (Colab Worker).`);
+    return;
   }
 
   // Khởi tạo hàng đợi queue
@@ -300,6 +298,12 @@ export async function runGenerateClip(options: GenerateClipOptions) {
   // Đo balance trước khi gọi
   const balanceBefore = await fetchAccountBalance(apiKey);
   console.log(`💰 Số dư Pollen ban đầu:`, balanceBefore?.balance ?? "Không giới hạn / Không xác định");
+
+  if (balanceBefore && typeof balanceBefore.balance === "number" && balanceBefore.balance <= 0) {
+    console.log(`⚡ [FAST-SKIP TẦNG 1] (0ms): Số dư Pollen = ${balanceBefore.balance} (hết hạn mức trả phí).`);
+    console.log(`   👉 Bỏ qua gọi API để tránh HTTP 402 và bảo mật ảnh người dùng. Giữ nguyên Tầng 0.`);
+    return;
+  }
 
   let pilotStats: any = null;
 

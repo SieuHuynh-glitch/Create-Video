@@ -12,13 +12,20 @@ export const SceneTypeSchema = z.enum([
   "image",
   "video",
   "luma-parallax",
+  "metamorphosis",
 ]);
 export type SceneType = z.infer<typeof SceneTypeSchema>;
 
 /**
  * Kiểu phương tiện hình ảnh trực quan (Visual Media)
  */
-export const VisualTypeSchema = z.enum(["motion", "image", "video", "luma-parallax"]);
+export const VisualTypeSchema = z.enum([
+  "motion",
+  "image",
+  "video",
+  "luma-parallax",
+  "metamorphosis",
+]);
 export type VisualType = z.infer<typeof VisualTypeSchema>;
 
 /**

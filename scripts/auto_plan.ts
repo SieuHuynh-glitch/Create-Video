@@ -53,9 +53,13 @@ function getPromptForImage(filename: string): string {
   return "Surreal monochrome black ink art on pure white background, meditative fluid motion, organic metamorphosis, high contrast, 24fps";
 }
 
-export function generateAutoPlan(slug: string, targetDurationSec: number = 120) {
+export function generateAutoPlan(
+  slug: string,
+  targetDurationSec: number = 120,
+  customAnchorPaths?: string[]
+) {
   console.log(`\n======================================================`);
-  console.log(`🧠 TỰ ĐỘNG LẬP KẾ HOẠCH SẢN XUẤT (AUTO PLANNER)`);
+  console.log(`🧠 TỰ ĐỘNG LẬP KẾ HOẠCH SẢN XUẤT (AUTO PLANNER V4.1)`);
   console.log(`📁 Slug: ${slug}`);
   console.log(`⏱️ Thời lượng mục tiêu: ${targetDurationSec} giây`);
   console.log(`======================================================\n`);
@@ -63,29 +67,86 @@ export function generateAutoPlan(slug: string, targetDurationSec: number = 120) 
   const inputDir = path.join("inputs", slug);
   const imagesDir = path.join(inputDir, "images");
   const briefPath = path.join(inputDir, "brief.md");
+  const enrichedBriefPath = path.join("runs", slug, "enriched_brief.md");
+
   let projectTitle = "Natural Cycle: The Infinite Monochrome Metamorphosis";
-  if (fs.existsSync(briefPath)) {
-    const briefContent = fs.readFileSync(briefPath, "utf-8");
-    const titleMatch = briefContent.match(/-\s+\*\*Tiêu đề:\*\*\s*(.+)/);
+  const effectiveBriefPath = fs.existsSync(enrichedBriefPath) ? enrichedBriefPath : briefPath;
+  if (fs.existsSync(effectiveBriefPath)) {
+    const briefContent = fs.readFileSync(effectiveBriefPath, "utf-8");
+    const titleMatch = briefContent.match(/-\s+\*\*Tiêu đề:\*\*\s*(.+)/i) || briefContent.match(/# (?:BRIEF|ENRICHED BRIEF):\s*(.+)/i);
     if (titleMatch) projectTitle = titleMatch[1].trim();
   }
 
-  if (!fs.existsSync(imagesDir)) {
-    throw new Error(`Không tìm thấy thư mục ảnh đầu vào: ${imagesDir}`);
-  }
+  const runDir = path.join("runs", slug);
+  const runMediaDir = path.join(runDir, "media");
+  const pendingJobsDir = path.join("jobs", "pending", slug);
+  const doneJobsDir = path.join("jobs", "done", slug);
+  const failedJobsDir = path.join("jobs", "failed", slug);
+  const manifestPath = path.join(runDir, "manifest.json");
 
-  // 1. Quét toàn bộ ảnh trong inputs/<slug>/images/
-  const imageFiles = fs
-    .readdirSync(imagesDir)
-    .filter((f) => /\.(jpg|jpeg|png|webp)$/i.test(f))
-    .sort();
+  [runMediaDir, pendingJobsDir, doneJobsDir, failedJobsDir].forEach((d) => {
+    if (!fs.existsSync(d)) fs.mkdirSync(d, { recursive: true });
+  });
+
+  // 1. Quét danh sách ảnh đầu vào (kết hợp ảnh gốc và ảnh sinh bù nếu có)
+  let imageFiles: string[] = [];
+  const anchorSources: Record<string, "user-provided" | "ai-generated-anchor (FLUX.1), unverified"> = {};
+
+  if (customAnchorPaths && customAnchorPaths.length > 0) {
+    customAnchorPaths.forEach((anchorPath) => {
+      const fileName = path.basename(anchorPath);
+      const dest = path.join(runMediaDir, fileName);
+      if (!fs.existsSync(dest) || fs.statSync(dest).size !== fs.statSync(anchorPath).size) {
+        fs.copyFileSync(anchorPath, dest);
+      }
+      imageFiles.push(fileName);
+      anchorSources[fileName] = anchorPath.includes("generated_anchors")
+        ? "ai-generated-anchor (FLUX.1), unverified"
+        : "user-provided";
+    });
+  } else {
+    if (!fs.existsSync(imagesDir)) {
+      throw new Error(`Không tìm thấy thư mục ảnh đầu vào: ${imagesDir}`);
+    }
+    imageFiles = fs
+      .readdirSync(imagesDir)
+      .filter((f) => /\.(jpg|jpeg|png|webp)$/i.test(f))
+      .sort();
+
+    imageFiles.forEach((file) => {
+      const src = path.join(imagesDir, file);
+      const dest = path.join(runMediaDir, file);
+      if (!fs.existsSync(dest) || fs.statSync(dest).size !== fs.statSync(src).size) {
+        fs.copyFileSync(src, dest);
+      }
+      anchorSources[file] = "user-provided";
+    });
+  }
 
   if (imageFiles.length === 0) {
-    throw new Error(`Thư mục ${imagesDir} không chứa ảnh hợp lệ nào!`);
+    throw new Error(`Không tìm thấy ảnh hợp lệ nào cho dự án ${slug}!`);
   }
 
-  console.log(`📸 Đã tìm thấy ${imageFiles.length} ảnh nguồn trong ${imagesDir}/:`);
-  imageFiles.forEach((f, idx) => console.log(`   [${idx + 1}] ${f}`));
+  console.log(`📸 Đã tập hợp ${imageFiles.length} ảnh neo trong ${runMediaDir}/:`);
+  imageFiles.forEach((f, idx) => console.log(`   [${idx + 1}] ${f} (${anchorSources[f]})`));
+
+  // Cập nhật manifest.json với nguồn gốc ảnh
+  let manifestData: any = { slug, media: {} };
+  if (fs.existsSync(manifestPath)) {
+    try {
+      manifestData = JSON.parse(fs.readFileSync(manifestPath, "utf-8"));
+    } catch {}
+  }
+  if (!manifestData.media) manifestData.media = {};
+  imageFiles.forEach((f) => {
+    manifestData.media[f] = {
+      type: "image",
+      source: anchorSources[f],
+      license: anchorSources[f] === "user-provided" ? "User Provided / Original Art" : "ai-generated-anchor (FLUX.1), unverified",
+      registeredAt: new Date().toISOString(),
+    };
+  });
+  fs.writeFileSync(manifestPath, JSON.stringify(manifestData, null, 2), "utf-8");
 
   // 2. Tính toán số shot và phân bổ thời lượng khớp chuẩn 120s @ 30fps
   const fps = 30;
@@ -103,26 +164,6 @@ export function generateAutoPlan(slug: string, targetDurationSec: number = 120) 
   console.log(`   - Overlap: ${overlapFrames} frames (1.0s)`);
   console.log(`   - Tổng số shot: ${shotCount}`);
   console.log(`   - Net duration mỗi shot: ~${(baseNetFramesPerShot / fps).toFixed(2)}s`);
-
-  // Đảm bảo các thư mục đích sẵn sàng
-  const runDir = path.join("runs", slug);
-  const runMediaDir = path.join(runDir, "media");
-  const pendingJobsDir = path.join("jobs", "pending", slug);
-  const doneJobsDir = path.join("jobs", "done", slug);
-  const failedJobsDir = path.join("jobs", "failed", slug);
-
-  [runMediaDir, pendingJobsDir, doneJobsDir, failedJobsDir].forEach((d) => {
-    if (!fs.existsSync(d)) fs.mkdirSync(d, { recursive: true });
-  });
-
-  // Đồng bộ ảnh từ inputs/<slug>/images sang runs/<slug>/media/
-  imageFiles.forEach((file) => {
-    const src = path.join(imagesDir, file);
-    const dest = path.join(runMediaDir, file);
-    if (!fs.existsSync(dest) || fs.statSync(dest).size !== fs.statSync(src).size) {
-      fs.copyFileSync(src, dest);
-    }
-  });
 
   const timelineScenes: TimelineScene[] = [];
   const planShots: ShotPlan[] = [];

@@ -2,27 +2,30 @@ import fs from "fs";
 import path from "path";
 import { execSync } from "child_process";
 import { generateAutoPlan } from "./auto_plan";
+import { auditAndEnrichBrief } from "./audit_input";
+import { expandReferences } from "./expand_references";
 
 export async function runMakeAuto(slug: string, targetDurationSec: number = 120) {
   const startTime = Date.now();
   console.log(`\n======================================================`);
-  console.log(`🏭 KHỞI ĐỘNG NHÀ MÁY SẢN XUẤT VIDEO TỰ ĐỘNG (AUTO MODE)`);
+  console.log(`🏭 KHỞI ĐỘNG NHÀ MÁY SẢN XUẤT VIDEO TỰ ĐỘNG (AUTO MODE V4.1)`);
   console.log(`📁 Dự án (Slug): ${slug}`);
   console.log(`⏱️ Thời lượng: ${targetDurationSec}s`);
   console.log(`⚡ Chế độ: Hoàn toàn tự động - Không có điểm dừng chờ`);
   console.log(`======================================================\n`);
 
-  // BƯỚC 1: KIỂM TRA ĐẦU VÀO (PREFLIGHT INPUTS)
-  const inputDir = path.join("inputs", slug);
-  const imagesDir = path.join(inputDir, "images");
-  if (!fs.existsSync(imagesDir)) {
-    console.error(`❌ Lỗi: Thư mục ảnh đầu vào không tồn tại: ${imagesDir}`);
-    process.exit(1);
-  }
+  // BƯỚC 0: CỔNG THẨM ĐỊNH & LÀM GIÀU ĐẦU VÀO (PREFLIGHT AUDIT & EXPANSION)
+  console.log(`🧐 [0.1/5] Thẩm định chế độ âm thanh & làm giàu kịch bản...`);
+  const auditResult = auditAndEnrichBrief(slug, targetDurationSec);
+  console.log(`   - Chế độ âm thanh: [${auditResult.audioMode}] | Dữ kiện cho phép: [${auditResult.allowedNumbers.join(", ")}]`);
 
-  // BƯỚC 2: LẬP KẾ HOẠCH TỰ ĐỘNG (AUTO PLAN)
-  console.log(`🧠 [1/5] Khởi chạy Auto Planner...`);
-  const { timeline } = generateAutoPlan(slug, targetDurationSec);
+  console.log(`\n📸 [0.2/5] Đo Visual DNA & kiểm tra số lượng ảnh neo...`);
+  const expansionResult = await expandReferences(slug, 10);
+  console.log(`   - Visual DNA: [${expansionResult.visualDNA.type}] (YAVG: ${expansionResult.visualDNA.avgLuminance}, SAT: ${expansionResult.visualDNA.avgSaturation})`);
+
+  // BƯỚC 1: LẬP KẾ HOẠCH TỰ ĐỘNG (AUTO PLAN)
+  console.log(`\n🧠 [1/5] Khởi chạy Auto Planner với ${expansionResult.allAnchorPaths.length} ảnh neo...`);
+  const { timeline } = generateAutoPlan(slug, targetDurationSec, expansionResult.allAnchorPaths);
 
   const runDir = path.join("runs", slug);
   const timelinePath = path.join(runDir, "timeline.json");

@@ -2,7 +2,7 @@
 *(Automated Data-Driven Video Production Factory Pipeline)*
 
 - **Dự án:** Nhà máy Sản xuất Video Remotion (Create-Video)
-- **Phiên bản:** 2.5 (Design Refinement & Zero-Flaw Hardening: Fact-Check Contract, Exact DOM Text Measurement, Cover/Contain-blur Upscale, Audio Ducking & 2s Mastering, Paginated Contact Sheet & 1:1 Corner Crops)
+- **Phiên bản:** 4.1 (Input Auditor & Reference Expander, One-Pass Visual Normalization, Per-Shot Granular Fallback, Zero Unpaid API Leakage)
 - **Kiến trúc:** Single Agent, Sequential Execution, 100% Data-Driven & 100% Free Hybrid Cloud AI
 - **Ngày cập nhật:** 16/10/2026
 
@@ -15,13 +15,14 @@ Xây dựng một "nhà máy sản xuất video" tự động hóa hoàn toàn t
 - **Đầu vào (Input):** Một file mô tả yêu cầu kịch bản ngắn gọn dạng Markdown (`brief.md`).
 - **Đầu ra (Output):** Video MP4 chuẩn Full HD 1080p @ 30fps, thời lượng ~2 phút (110s – 130s), tích hợp giọng đọc thuyết minh tiếng Việt tự nhiên, hình ảnh trực quan sắc nét và trọn bộ tài liệu xuất bản SEO.
 
-### 1.2. Các Ràng Buộc Cứng (Hard Constraints)
+### 1.2. Các Ràng Buộc Cứng (Hard Constraints V4.1)
 Hệ thống được thiết kế và thực thi tuân thủ 100% các tiêu chí:
-1. **100% Không Chi Phí Bản Quyền / 0đ API (Free Hybrid Cloud Tier):** Không sử dụng bất kỳ API trả phí nào, không yêu cầu thẻ tín dụng hay tài khoản nạp tiền. Tận dụng tầng miễn phí đám mây (Edge-TTS, Pollinations FLUX.1) kết hợp với lõi render cục bộ Remotion.
-2. **Kiến trúc Single-Agent tuần tự:** Một agent duy nhất điều phối tuần tự từng khâu. Không dựa dẫm vào bộ nhớ hội thoại; mọi trạng thái, nhật ký và tiến độ đều được lưu trữ trực tiếp vào các tệp tin trong thư mục `runs/<slug>/` (`status.md`, `storyboard.json`, `timeline.json`, `manifest.json`, `social.md`).
-3. **Điều khiển hoàn toàn bằng dữ liệu (Data-Driven First):** File `timeline.json` là "nguồn chân lý duy nhất" (Single Source of Truth). Tốc độ đọc và dung lượng từ được tính toán tự động từ tệp hiệu chuẩn thực tế `config/calibration.json`. Nghiêm cấm hard-code số frame trong code React.
-4. **Quy tắc Fail-Safe & Fallback Minh Bạch:** Khi công cụ bên ngoài gặp lỗi, hệ thống dừng lại báo cáo. Mọi cơ chế chuyển đổi dự phòng (như chuyển video thiếu clip sang ảnh Ken Burns) đều bắt buộc phải ghi rõ cảnh báo vào `status.md` để người vận hành kiểm soát.
-5. **Kiểm soát bản quyền media nghiêm ngặt & minh bạch:** Hình ảnh do AI sinh tự động bắt buộc gắn nhãn `ai-generated, unverified` kèm ngày sinh và nguồn; không tự gán nhãn thương mại khi chưa kiểm chứng. Cảnh thiếu media bắt buộc dùng visual placeholder hệ thống.
+1. **100% Không Chi Phí Bản Quyền / 0đ API (Free Hybrid Cloud Tier):** Không sử dụng bất kỳ API trả phí nào, không yêu cầu thẻ tín dụng hay nạp tiền. Tận dụng tầng miễn phí đám mây (Edge-TTS, Pollinations Image FLUX.1) kết hợp với lõi render cục bộ Remotion và Colab GPU Worker (Tesla T4). Kích hoạt **Fast-Skip 0ms** cho Tầng 1 Direct Video API khi không có balance trả phí để chống rò rỉ dữ liệu ảnh người dùng ra máy chủ ngoài.
+2. **Bảo toàn Tính Bất Biến của Thư Mục Gốc (`inputs/<slug>/`):** Thư mục `inputs/<slug>/images/` do người dùng cung cấp là tài nguyên bất biến. Mọi ảnh neo sinh bù tại Bước 0 (`reference-expander`) bắt buộc phải lưu riêng vào `runs/<slug>/media/generated_anchors/` và gộp vào timeline mà không làm bẩn thư mục gốc.
+3. **Phân Định Rõ Ràng 2 Chế Độ Âm Thanh (`audioMode`):** Tự động nhận diện từ `brief.md`: chế độ `"voiceover"` (video thuyết minh ~380 từ qua Edge-TTS) và chế độ `"ambient-only"` (phim thơ thị giác 432Hz Drone Atmosphere không lời đọc), không bao giờ ép sinh lời đọc cho phim thơ nghệ thuật.
+4. **Hạ Tầng Cục Bộ Từng Shot (Per-Shot Granular Fallback):** Khi một clip AI bị lỗi hoặc OOM, hệ thống chạy cơ chế tự sửa 2 lần (cắt frame đơ & bọc camera easing động). Nếu vẫn không khắc phục được, **chỉ hạ riêng shot đó về Tầng 0 (`LumaParallaxScene`)** và **bảo toàn 100% các shot AI Video khác** trong một Hybrid Timeline liền mạch.
+5. **Điều Khiển Hoàn Toàn Bằng Dữ Liệu (Data-Driven First):** File `timeline.json` là "nguồn chân lý duy nhất" (Single Source of Truth). Số frame, nhịp thở âm thanh và góc chuyển động camera đều được cấu hình minh bạch, tuyệt đối không hard-code số frame trong code React.
+6. **Kiểm Soát Bản Quyền Media Nghiêm Ngặt & Minh Bạch:** Hình ảnh do AI sinh tự động bắt buộc gắn nhãn `ai-generated, unverified` trong `manifest.json`. Trích xuất 4 góc crop 1:1 (`out/crops/`) để người vận hành kiểm tra watermark.
 
 ---
 
@@ -414,4 +415,70 @@ Toàn bộ hệ thống code và tài liệu đã được cập nhật đồng 
 3. **Kết quả đo lường Pilot Video API:**
    - Script thực thi: `scripts/generate_clip.ts` với cơ chế retry exponential backoff và bảo mật tuyệt đối API key qua `.env`.
    - Kết quả đo đạc chi tiết lưu tại [docs/video-api-benchmark.md](file:///d:/project/Create-Video/docs/video-api-benchmark.md).
+
+---
+
+## 9. NÂNG CẤP HỆ THỐNG LÊN PHIÊN BẢN V4.1: CỔNG THẨM ĐỊNH & LÀM GIÀU ĐẦU VÀO (BƯỚC 0), ĐỒNG NHẤT THỊ GIÁC ONE-PASS (BƯỚC 2.5), VÀ HẠ TẦNG CỤC BỘ THEO TỪNG SHOT (PER-SHOT GRANULAR FALLBACK)
+
+### 9.1. Tổng Quan & Bối Cảnh Nâng Cấp V4.1
+Dựa trên kết quả rà soát toàn diện và đánh giá từ chuyên gia trên nền tảng AUTO MODE và B-Workflow, phiên bản V4.1 giải quyết dứt điểm 3 điểm nghẽn nghiêm trọng:
+1. **Thiếu hụt dữ liệu đầu vào (`inputs/<slug>/`):** Tránh hiện tượng lặp cảnh khi `brief.md` quá ngắn (<60 từ) hoặc `images/` có quá ít ảnh (<10 ảnh cho 120s).
+2. **Lệch tông màu & độ sáng nền giữa các tầng:** Tranh gốc có nền trắng tinh khiết `#FFFFFF`, nhưng ảnh AI/video AI từ Colab hoặc Veo bị ám xám `#D8D8D8` - `#E5E5E5`, gây lộ viền khi chạy `LumaParallaxScene` hoặc chớp nền khi chuyển cảnh tan chảy `Melting Cross-Dissolve`.
+3. **Hạ tầng toàn cục gây lãng phí:** Khi 1 clip bị lỗi, toàn bộ video không được phép sập hay hạ tầng hàng loạt; hệ thống phải hạ tầng cục bộ (Per-Shot Granular Fallback) cho riêng shot đó về Tầng 0 và giữ nguyên 100% các shot AI Video khác.
+
+### 9.2. Sơ đồ Kiến trúc Pipeline Toàn Diện V4.1
+
+```mermaid
+flowchart TD
+    subgraph Step0["BƯỚC 0: CỔNG THẨM ĐỊNH & LÀM GIÀU ĐẦU VÀO"]
+        InBrief["inputs/<slug>/brief.md"] --> Auditor["scripts/audit_input.ts"]
+        Auditor -->|Nhận diện audioMode & allowedNumbers| EnrichedBrief["runs/<slug>/enriched_brief.md"]
+        InImages["inputs/<slug>/images/"] --> Expander["scripts/expand_references.ts"]
+        Expander -->|Đo Visual DNA: YAVG, cornerYAVG, SATAVG| DNA["Visual DNA: HIGH_KEY_MONOCHROME_WHITE_BG"]
+        Expander -->|Thiếu ảnh: N < N_min 10| FluxGen["Pollinations Image FLUX.1 (100% Free 0 Pollen)"]
+        FluxGen --> GenAnchors["runs/<slug>/media/generated_anchors/"]
+    end
+
+    subgraph Step1["BƯỚC 1: LẬP KẾ HOẠCH TỰ ĐỘNG"]
+        EnrichedBrief & InImages & GenAnchors --> Planner["scripts/auto_plan.ts"]
+        Planner --> Plan["inputs/<slug>/plan.json"]
+        Planner --> Timeline["runs/<slug>/timeline.json (3600 frames, 1.0s overlap)"]
+        Planner --> Queue["jobs/pending/<slug>/*.json"]
+    end
+
+    subgraph Step2["BƯỚC 2: DỰNG HÌNH TẦNG 0 LOCAL"]
+        Timeline --> Render0["scripts/render_video.ts (LumaParallaxScene)"]
+        Render0 --> OutMP4["out/<slug>.mp4 & out/report.md"]
+        OutMP4 --> QAGates["Media QA, Motion QA (Safe margin 96px), Audio QA EBU R128"]
+    end
+
+    subgraph Step3["BƯỚC 2.5 & BƯỚC 4: NÂNG CẤP VÀ HẠ TẦNG CỤC BỘ"]
+        WorkerClips["jobs/done/<slug>/*.mp4 (Colab Worker LTX-Video)"] --> Norm["scripts/normalize_visuals.ts (One-Pass 1080p Lanczos + Colorlevels)"]
+        Norm --> CheckClip["scripts/check_clip.ts (Motion QA, freezedetect, 2 lần Tự Sửa)"]
+        CheckClip -->|Đạt chuẩn / Tự sửa thành công| UpgradeTier2["Cập nhật targetScene.type = 'video' (Tier 2)"]
+        CheckClip -->|Lỗi / jobs/failed/<slug>/| FallbackTier0["HẠ RIÊNG SHOT ĐÓ VỀ 'luma-parallax' (Tier 0)"]
+        UpgradeTier2 & FallbackTier0 --> HybridTimeline["runs/<slug>/timeline.json (Hybrid Timeline)"]
+        HybridTimeline --> RenderHybrid["scripts/render_video.ts -> Re-render Hybrid Video"]
+    end
+```
+
+### 9.3. Các Thành Tựu Thực Nghiệm Đạt Được (Empirical Measurements)
+1. **Phát hiện cấu hình FFmpeg của Remotion v4.0.535:**
+   - Qua kiểm định thực tế `npx remotion ffmpeg -filters`, hệ thống phát hiện embedded FFmpeg được biên dịch với cờ `--disable-filters`, chỉ mở whitelist một số filter như `scale`, `crop`, `loudnorm`, `colorspace`, `trim`, `concat`.
+   - Các filter như `signalstats`, `unsharp`, `hue`, `colorlevels`, `freezedetect`, `blackdetect` **không có sẵn** trong binary embedded của Remotion.
+   - **Giải pháp xử lý:** Xây dựng module Python PIL kết hợp NumPy (`scripts/normalize_image.py`) để đo chính xác tuyệt đối các chỉ số quang sai và co giãn dải màu (Colorlevel Clamping) với thời gian thực thi siêu tốc (<50ms).
+2. **Số đo thực nghiệm trên dự án `natural-cycle-v2`:**
+   - Ảnh gốc `scene_02_skull.jpg`:
+     - Độ sáng trung bình `YAVG`: **232.43 / 255**
+     - Độ sáng 4 góc `cornerYAVG`: **255.00 / 255** (Trắng tinh khiết 100%)
+     - Độ bão hòa màu `SATAVG`: **0.00 / 255** (Đơn sắc tuyệt đối 100%)
+     - Visual DNA: Khóa cứng `HIGH_KEY_MONOCHROME_WHITE_BG`.
+   - Ảnh neo sinh bù qua Pollinations FLUX.1 (`anchor_11.jpg`):
+     - Trước chuẩn hóa: Kích thước 1024x576, `YAVG = 137.57`, `cornerYAVG = 168.98`, `SATAVG = 14.63` (bị ám xám và lệch màu).
+     - Sau chuẩn hóa One-Pass (`normalize_visuals.ts`): Kích thước **1920x1080** (Lanczos), `SATAVG = 0.00` (khử sạch ám màu), nền được ép lên trắng tuyệt đối.
+3. **Thực nghiệm Cơ chế Hạ tầng Cục bộ (Per-Shot Granular Fallback):**
+   - Clip AI `shot_01.mp4` trong `jobs/done/natural-cycle-v2/` được kiểm định: Tự sửa lần 2 thành công bằng cách bọc chuyển động camera easing động (`zoom_in`) trên `VideoScene`, nâng cấp thành công lên **Tier 2 AI Video**.
+   - Job `shot_02.json` trong `jobs/failed/natural-cycle-v2/` (mô phỏng Colab GPU OOM) được hệ thống tự động nhận diện và **chỉ hạ riêng `shot_02` về Tier 0 `LumaParallaxScene`**, bảo toàn 100% các shot khác.
+   - Trình kết xuất Remotion render mượt mà Hybrid Timeline kết hợp giữa các cảnh `VideoScene` và `LumaParallaxScene` với chuyển cảnh chồng lấn tan chảy `Melting Cross-Dissolve` $o = 1.0$s (30 frames).
+
 

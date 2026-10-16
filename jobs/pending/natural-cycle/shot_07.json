@@ -1,0 +1,18 @@
+{
+  "slug": "natural-cycle",
+  "shotId": "shot_07",
+  "sourceImage": "runs/natural-cycle/media/scene_08_tree_fruits.jpg",
+  "inputImagePath": "D:\\project\\Create-Video\\runs\\natural-cycle\\media\\scene_08_tree_fruits.jpg",
+  "prompt": "Surreal monochrome ink painting on pure white background, heavy blooming tree branches laden with miniature skull-shaped fruits gently swaying in breeze",
+  "seed": 864,
+  "model": "Lightricks/LTX-Video",
+  "width": 704,
+  "height": 384,
+  "fps": 24,
+  "numFrames": 49,
+  "guidanceScale": 3.5,
+  "numSteps": 30,
+  "outputVideoPath": "jobs/done/natural-cycle/shot_07.mp4",
+  "status": "pending",
+  "createdAt": "2026-10-16T14:53:34.307Z"
+}

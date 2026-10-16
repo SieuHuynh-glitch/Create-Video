@@ -76,3 +76,12 @@ Pipeline hiện tại đã:
 3. Bảo vệ khóa API tuyệt đối trong `.env` (không log, không commit).
 4. Cập nhật trạng thái `pending` trong [runs/natural-cycle-v2/status.md](file:///d:/project/Create-Video/runs/natural-cycle-v2/status.md).
 5. **DỪNG LẠI HOÀN TOÀN** để bạn lựa chọn phương án tiếp theo.
+
+---
+
+## 6. CẬP NHẬT KIẾN TRÚC V4.1: CƠ CHẾ FAST-SKIP 0MS CHO TẦNG 1
+
+Từ bằng chứng thực nghiệm ở trên (100% video model trên Pollinations đều là `paid_only: true` và trả về HTTP 402 khi balance = 0):
+- **Cơ chế Fast-Skip 0ms:** Trong phiên bản V4.1 (`scripts/generate_clip.ts`), nếu kiểm tra thấy không có API key trả phí hoặc số dư Pollen = 0, hệ thống **bỏ qua Tầng 1 ngay lập tức trong 0ms**, không gửi request HTTP và không tải ảnh của người dùng lên `media.pollinations.ai`.
+- **Bảo toàn dữ liệu & thời gian:** Loại bỏ 2.1s delay vô ích cho mỗi shot, bảo mật ảnh nguồn gốc của người dùng, duy trì các shot ở Tầng 0 (`LumaParallaxScene`) và xuất job vào `jobs/pending/` cho Tầng 2 (Colab Worker LTX-Video) hoặc B-Workflow (Veo).
+

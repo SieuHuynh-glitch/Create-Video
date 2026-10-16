@@ -49,6 +49,45 @@ export const VideoScene: React.FC<VideoSceneProps> = ({
   const shouldLoop = !!(clipFrames && clipFrames > 0 && clipFrames < totalFrames);
   const playbackRate = visual?.playbackRate || 0.75;
 
+  // Tính toán camera easing động nếu có (hỗ trợ tự sửa hoặc làm giàu chuyển động)
+  const cameraEase = visual?.cameraEase;
+  let scale = 1.0;
+  let translateX = 0;
+  let translateY = 0;
+
+  if (cameraEase && cameraEase !== "static") {
+    switch (cameraEase) {
+      case "zoom_in":
+        scale = interpolate(frame, [0, totalFrames], [1.0, 1.1], {
+          extrapolateLeft: "clamp",
+          extrapolateRight: "clamp",
+        });
+        translateY = interpolate(frame, [0, totalFrames], [0, -12]);
+        break;
+      case "zoom_out":
+        scale = interpolate(frame, [0, totalFrames], [1.12, 1.01], {
+          extrapolateLeft: "clamp",
+          extrapolateRight: "clamp",
+        });
+        translateY = interpolate(frame, [0, totalFrames], [-10, 0]);
+        break;
+      case "pan_left":
+        scale = 1.05;
+        translateX = interpolate(frame, [0, totalFrames], [20, -20]);
+        break;
+      case "pan_right":
+        scale = 1.05;
+        translateX = interpolate(frame, [0, totalFrames], [-20, 20]);
+        break;
+      case "breathing":
+        scale = 1.03 + Math.sin(frame * 0.05) * 0.015;
+        translateY = Math.cos(frame * 0.04) * 4;
+        break;
+      default:
+        break;
+    }
+  }
+
   const renderVideoElement = () => (
     <OffthreadVideo
       src={staticFile(cleanFile)}
@@ -86,6 +125,8 @@ export const VideoScene: React.FC<VideoSceneProps> = ({
             left: 0,
             width: "100%",
             height: "100%",
+            transform: `scale(${scale}) translate(${translateX}px, ${translateY}px)`,
+            transformOrigin: "center center",
           }}
         >
           {shouldLoop ? (
