@@ -5,6 +5,9 @@ import argparse
 import subprocess
 from pathlib import Path
 
+# Ngăn chặn phân mảnh VRAM trên PyTorch theo khuyến nghị chính thức
+os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "expandable_segments:True"
+
 # Thiết lập đường dẫn gốc
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 
@@ -61,7 +64,7 @@ def extract_last_frame(clip_path: Path, output_frame_path: Path):
 def main():
     parser = argparse.ArgumentParser(description="Tự động sinh 12 clip AI miễn phí bằng GPU Google Colab")
     parser.add_argument("--run", default="natural-cycle-v2", help="Mã slug dự án")
-    parser.add_argument("--model", default="cogvideox", choices=["cogvideox", "ltx"], help="Mô hình AI Video (cogvideox siêu nhẹ 4.9GB hoặc ltx)")
+    parser.add_argument("--model", default="cogvideox", choices=["cogvideox", "ltx", "svd"], help="Mô hình AI Video (cogvideox nhẹ 4.9GB, svd siêu nhẹ, hoặc ltx)")
     parser.add_argument("--shot", default=None, help="Chỉ sinh một shot cụ thể (ví dụ: shot_01)")
     parser.add_argument("--num_inference_steps", type=int, default=30, help="Số bước khử nhiễu (Denoising steps)")
     parser.add_argument("--force", action="store_true", help="Ghi đè clip đã tồn tại")
@@ -90,35 +93,47 @@ def main():
     dtype = torch.float16
     print(f"⚡ Kiểu dữ liệu tối ưu: {dtype}\n")
 
-    # 2. Tải Pipeline mô hình vào GPU VRAM (Tránh ngốn System RAM gây OOM)
+    # 2. Tải Pipeline mô hình với Dynamic CPU Offloading (Chống tràn VRAM trên GPU T4 15GB)
+    import gc
+    gc.collect()
+    torch.cuda.empty_cache()
     from diffusers.utils import export_to_video, load_image
 
     if args.model == "cogvideox":
         from diffusers import CogVideoXImageToVideoPipeline
-        print("⏳ Đang tải mô hình THUDM/CogVideoX-2b (Siêu nhẹ 4.9GB - An toàn tuyệt đối cho Colab Free)...")
+        print("⏳ Đang tải mô hình THUDM/CogVideoX-2b (Kích hoạt Dynamic CPU Offload)...")
         pipe = CogVideoXImageToVideoPipeline.from_pretrained(
             "THUDM/CogVideoX-2b",
             torch_dtype=torch.float16,
-            low_cpu_mem_usage=True,
         )
-        pipe.to("cuda")
+        # BẬT TỐI ƯU HÓA BỘ NHỚ VRAM (TUYỆT ĐỐI KHÔNG DÙNG pipe.to("cuda") ĐỂ TRÁNH OOM TRÊN T4)
         pipe.vae.enable_tiling()
         pipe.vae.enable_slicing()
-        print("✅ Mô hình CogVideoX-2b đã nạp hoàn toàn vào 15GB GPU VRAM!\n")
+        pipe.enable_model_cpu_offload()
+        print("✅ Mô hình CogVideoX-2b đã kích hoạt Dynamic CPU Offload thành công! (VRAM tiêu thụ an toàn ~5-7GB / 15GB)\n")
+    elif args.model == "svd":
+        from diffusers import StableVideoDiffusionPipeline
+        print("⏳ Đang tải mô hình StabilityAI SVD-XT (Siêu ổn định trên T4)...")
+        pipe = StableVideoDiffusionPipeline.from_pretrained(
+            "stabilityai/stable-video-diffusion-img2vid-xt-1-1",
+            torch_dtype=torch.float16,
+            variant="fp16"
+        )
+        pipe.enable_model_cpu_offload()
+        print("✅ Mô hình SVD-XT đã nạp thành công!\n")
     else:
         from diffusers import LTXImageToVideoPipeline
-        print("⏳ Đang tải mô hình Lightricks/LTX-Video trực tiếp vào GPU VRAM (15GB)...")
+        print("⏳ Đang tải mô hình Lightricks/LTX-Video (Kích hoạt Dynamic CPU Offload)...")
         pipe = LTXImageToVideoPipeline.from_pretrained(
             "Lightricks/LTX-Video",
             torch_dtype=torch.float16,
-            low_cpu_mem_usage=True,
         )
-        pipe.to("cuda")
         if hasattr(pipe, "vae") and hasattr(pipe.vae, "enable_tiling"):
             pipe.vae.enable_tiling()
         if hasattr(pipe, "vae") and hasattr(pipe.vae, "enable_slicing"):
             pipe.vae.enable_slicing()
-        print("✅ Mô hình LTX-Video đã nạp an toàn vào GPU VRAM!\n")
+        pipe.enable_model_cpu_offload()
+        print("✅ Mô hình LTX-Video đã kích hoạt Dynamic CPU Offload!\n")
 
     # 3. Trích xuất danh mục Shot
     shots = parse_shot_list(shot_list_path)
@@ -166,6 +181,10 @@ def main():
         input_image = load_image(str(start_frame_path))
         print(f"  🖼️ Kích thước ảnh đầu vào: {input_image.size}")
 
+        allocated_gb = torch.cuda.memory_allocated() / (1024 ** 3)
+        reserved_gb = torch.cuda.memory_reserved() / (1024 ** 3)
+        print(f"  📊 VRAM hiện tại: {allocated_gb:.2f} GB đang dùng | {reserved_gb:.2f} GB đã cấp phát (Giới hạn T4: 14.56 GB)")
+
         # Sinh video AI
         print(f"  🚀 Đang sinh clip AI ({args.num_inference_steps} steps)...")
         print(f"     Prompt: \"{s['prompt'][:80]}...\"")
@@ -182,6 +201,18 @@ def main():
                     guidance_scale=6.0,
                 ).frames[0]
                 export_to_video(result, str(output_clip_path), fps=8)
+            elif args.model == "svd":
+                # SVD-XT: 1024x576, 25 frames @ 7fps (~3.6s)
+                resized_image = input_image.resize((1024, 576))
+                result = pipe(
+                    image=resized_image,
+                    num_frames=25,
+                    num_inference_steps=args.num_inference_steps,
+                    motion_bucket_id=127,
+                    fps=7,
+                    decode_chunk_size=8,
+                ).frames[0]
+                export_to_video(result, str(output_clip_path), fps=7)
             else:
                 # LTX-Video: tỷ lệ 16:9 tối ưu: 768x512, 121 frames @ 24fps
                 result = pipe(
