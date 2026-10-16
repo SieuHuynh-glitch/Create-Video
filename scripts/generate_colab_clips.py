@@ -105,7 +105,8 @@ def main():
         pipe = StableVideoDiffusionPipeline.from_pretrained(
             "stabilityai/stable-video-diffusion-img2vid-xt-1-1",
             torch_dtype=torch.float16,
-            variant="fp16"
+            variant="fp16",
+            low_cpu_mem_usage=True,
         )
         pipe.enable_model_cpu_offload()
         print("✅ Mô hình SVD-XT đã kích hoạt Dynamic CPU Offload thành công! (VRAM tiêu thụ an toàn ~4.5GB / 15GB)\n")
@@ -115,6 +116,7 @@ def main():
         pipe = LTXImageToVideoPipeline.from_pretrained(
             "Lightricks/LTX-Video",
             torch_dtype=torch.float16,
+            low_cpu_mem_usage=True,
         )
         if hasattr(pipe, "vae") and hasattr(pipe.vae, "enable_tiling"):
             pipe.vae.enable_tiling()
@@ -129,6 +131,7 @@ def main():
             pipe = CogVideoXImageToVideoPipeline.from_pretrained(
                 "THUDM/CogVideoX-2b",
                 torch_dtype=torch.float16,
+                low_cpu_mem_usage=True,
             )
             pipe.vae.enable_tiling()
             pipe.vae.enable_slicing()
@@ -141,7 +144,8 @@ def main():
             pipe = StableVideoDiffusionPipeline.from_pretrained(
                 "stabilityai/stable-video-diffusion-img2vid-xt-1-1",
                 torch_dtype=torch.float16,
-                variant="fp16"
+                variant="fp16",
+                low_cpu_mem_usage=True,
             )
             pipe.enable_model_cpu_offload()
             print("✅ Đã nạp thành công mô hình SVD-XT thay thế!\n")
@@ -221,7 +225,7 @@ def main():
                     num_inference_steps=args.num_inference_steps,
                     motion_bucket_id=127,
                     fps=7,
-                    decode_chunk_size=4,
+                    decode_chunk_size=2,  # Tối ưu cực đại: giải mã 2 frame/lần, triệt tiêu VRAM spike
                 ).frames[0]
                 export_to_video(result, str(output_clip_path), fps=7)
             else:
@@ -240,11 +244,16 @@ def main():
 
         print(f"  🎉 Đã lưu thành công: {output_clip_path.name}")
 
-        # Dọn sạch VRAM sau mỗi shot
+        # Dọn sạch VRAM và System RAM sau mỗi shot (Bảo đảm 0 rò rỉ bộ nhớ)
         del result
+        del input_image
+        if 'resized_image' in locals():
+            del resized_image
         import gc
         gc.collect()
         torch.cuda.empty_cache()
+        if hasattr(torch.cuda, "ipc_collect"):
+            torch.cuda.ipc_collect()
 
         # Trích xuất ngay khung cuối cho shot tiếp theo nếu cần
         next_shot_num = s["num"] + 1
