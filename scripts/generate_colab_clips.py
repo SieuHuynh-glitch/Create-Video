@@ -64,9 +64,9 @@ def extract_last_frame(clip_path: Path, output_frame_path: Path):
 def main():
     parser = argparse.ArgumentParser(description="Tự động sinh 12 clip AI miễn phí bằng GPU Google Colab")
     parser.add_argument("--run", default="natural-cycle-v2", help="Mã slug dự án")
-    parser.add_argument("--model", default="cogvideox", choices=["cogvideox", "ltx", "svd"], help="Mô hình AI Video (cogvideox nhẹ 4.9GB, svd siêu nhẹ, hoặc ltx)")
+    parser.add_argument("--model", default="svd", choices=["svd", "ltx", "cogvideox"], help="Mô hình AI Video (svd siêu ổn định 4.8GB chuẩn I2V, ltx, hoặc cogvideox)")
     parser.add_argument("--shot", default=None, help="Chỉ sinh một shot cụ thể (ví dụ: shot_01)")
-    parser.add_argument("--num_inference_steps", type=int, default=30, help="Số bước khử nhiễu (Denoising steps)")
+    parser.add_argument("--num_inference_steps", type=int, default=25, help="Số bước khử nhiễu (Denoising steps)")
     parser.add_argument("--force", action="store_true", help="Ghi đè clip đã tồn tại")
     args = parser.parse_args()
 
@@ -99,29 +99,17 @@ def main():
     torch.cuda.empty_cache()
     from diffusers.utils import export_to_video, load_image
 
-    if args.model == "cogvideox":
-        from diffusers import CogVideoXImageToVideoPipeline
-        print("⏳ Đang tải mô hình THUDM/CogVideoX-2b (Kích hoạt Dynamic CPU Offload)...")
-        pipe = CogVideoXImageToVideoPipeline.from_pretrained(
-            "THUDM/CogVideoX-2b",
-            torch_dtype=torch.float16,
-        )
-        # BẬT TỐI ƯU HÓA BỘ NHỚ VRAM (TUYỆT ĐỐI KHÔNG DÙNG pipe.to("cuda") ĐỂ TRÁNH OOM TRÊN T4)
-        pipe.vae.enable_tiling()
-        pipe.vae.enable_slicing()
-        pipe.enable_model_cpu_offload()
-        print("✅ Mô hình CogVideoX-2b đã kích hoạt Dynamic CPU Offload thành công! (VRAM tiêu thụ an toàn ~5-7GB / 15GB)\n")
-    elif args.model == "svd":
+    if args.model == "svd":
         from diffusers import StableVideoDiffusionPipeline
-        print("⏳ Đang tải mô hình StabilityAI SVD-XT (Siêu ổn định trên T4)...")
+        print("⏳ Đang tải mô hình StabilityAI SVD-XT (Siêu ổn định 4.8GB - Chuẩn Image-to-Video trên T4)...")
         pipe = StableVideoDiffusionPipeline.from_pretrained(
             "stabilityai/stable-video-diffusion-img2vid-xt-1-1",
             torch_dtype=torch.float16,
             variant="fp16"
         )
         pipe.enable_model_cpu_offload()
-        print("✅ Mô hình SVD-XT đã nạp thành công!\n")
-    else:
+        print("✅ Mô hình SVD-XT đã kích hoạt Dynamic CPU Offload thành công! (VRAM tiêu thụ an toàn ~4.5GB / 15GB)\n")
+    elif args.model == "ltx":
         from diffusers import LTXImageToVideoPipeline
         print("⏳ Đang tải mô hình Lightricks/LTX-Video (Kích hoạt Dynamic CPU Offload)...")
         pipe = LTXImageToVideoPipeline.from_pretrained(
@@ -134,6 +122,29 @@ def main():
             pipe.vae.enable_slicing()
         pipe.enable_model_cpu_offload()
         print("✅ Mô hình LTX-Video đã kích hoạt Dynamic CPU Offload!\n")
+    else:
+        from diffusers import CogVideoXImageToVideoPipeline
+        print("⏳ Đang tải mô hình THUDM/CogVideoX-2b (Kích hoạt Dynamic CPU Offload)...")
+        try:
+            pipe = CogVideoXImageToVideoPipeline.from_pretrained(
+                "THUDM/CogVideoX-2b",
+                torch_dtype=torch.float16,
+            )
+            pipe.vae.enable_tiling()
+            pipe.vae.enable_slicing()
+            pipe.enable_model_cpu_offload()
+            print("✅ Mô hình CogVideoX-2b đã kích hoạt Dynamic CPU Offload thành công!\n")
+        except Exception as e:
+            print(f"⚠️ CogVideoX-2B chỉ hỗ trợ Text-to-Video ({e}). Tự động chuyển đổi mượt mà sang SVD-XT (Image-to-Video)...")
+            from diffusers import StableVideoDiffusionPipeline
+            args.model = "svd"
+            pipe = StableVideoDiffusionPipeline.from_pretrained(
+                "stabilityai/stable-video-diffusion-img2vid-xt-1-1",
+                torch_dtype=torch.float16,
+                variant="fp16"
+            )
+            pipe.enable_model_cpu_offload()
+            print("✅ Đã nạp thành công mô hình SVD-XT thay thế!\n")
 
     # 3. Trích xuất danh mục Shot
     shots = parse_shot_list(shot_list_path)
@@ -210,7 +221,7 @@ def main():
                     num_inference_steps=args.num_inference_steps,
                     motion_bucket_id=127,
                     fps=7,
-                    decode_chunk_size=8,
+                    decode_chunk_size=4,
                 ).frames[0]
                 export_to_video(result, str(output_clip_path), fps=7)
             else:
