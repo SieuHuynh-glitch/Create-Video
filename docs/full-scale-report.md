@@ -1,8 +1,12 @@
 # Báo Cáo Đo Lường Kiểm Thử Quy Mô Lớn 2 Phút (Full-Scale Production Benchmark Report)
 
+> [!WARNING]
+> **TÀI LIỆU NÀY ĐÃ HẾT HIỆU LỰC / SUPERSEDED (v2.5, slideshow architecture).**  
+> Báo cáo này ghi nhận kết quả đợt chạy trên phiên bản cũ v2.5 sử dụng kiến trúc slideshow Ken Burns 2.5D tĩnh. Đối với báo cáo đo lường thực nghiệm hiện tại và bảng đối soát bằng chứng vật lý, vui lòng tham khảo [docs/audit-v4.2.md](file:///d:/project/Create-Video/docs/audit-v4.2.md) và [docs/STATUS.md](file:///d:/project/Create-Video/docs/STATUS.md).
+
 *Phiên bản hệ thống: 2.5 (Design Refinement & Zero-Flaw Hardening)*  
 *Thời gian chạy thực tế: 16/10/2026 (11:10 – 11:48)*  
-*Trạng thái: ✅ HOÀN TẤT THÀNH CÔNG 100% VỚI VIDEO 2 PHÚT THẬT*
+*Trạng thái: Đã lưu trữ (Archived / Superseded)*
 
 Tài liệu này là hồ sơ đo lường thực nghiệm cho đợt kiểm thử quy mô lớn 2 phút (chính xác 120,0 giây = đúng 3.600 frames @ 30fps, 10 phân cảnh), thu thập toàn bộ các chỉ số vận hành thực tế được đo đạc trực tiếp từ file MP4 và hệ thống Remotion.
 
