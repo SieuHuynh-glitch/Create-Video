@@ -14,6 +14,51 @@ export interface AuditResult {
  * BƯỚC 0.1: THẨM ĐỊNH VÀ LÀM GIÀU BRIEF ĐẦU VÀO (INPUT AUDITOR)
  * Cách dùng: npx tsx scripts/audit_input.ts <slug> [--duration 120]
  */
+/**
+ * TRÍCH XUẤT HỢP ĐỒNG DỮ KIỆN (FACT-CHECK CONTRACT)
+ * Chỉ thu thập các con số thực sự là dữ kiện factual từ brief,
+ * bỏ qua số thứ tự danh mục (1., 2.), nhãn shot (Shot 01–12), và tên tệp (scene_02.jpg).
+ */
+export function extractAllowedNumbersFromBrief(briefContent: string): string[] {
+  // 1. Kiểm tra nếu có trường khai báo rõ ràng Allowed Numbers
+  const explicitMatch = briefContent.match(/(?:Allowed Numbers|Allowed numbers|Số liệu cho phép)\s*:\s*(\[[^\]]+\]|[^\n]+)/i);
+  if (explicitMatch) {
+    const rawValue = explicitMatch[1].trim();
+    if (rawValue.startsWith("[") && rawValue.endsWith("]")) {
+      try {
+        const parsed = JSON.parse(rawValue);
+        if (Array.isArray(parsed)) {
+          return Array.from(new Set(parsed.map(String))).sort((a, b) => parseFloat(a) - parseFloat(b));
+        }
+      } catch {
+        const matches = rawValue.match(/["']?([^"',\s\[\]]+)["']?/g) || [];
+        const cleaned = matches.map((m) => m.replace(/["']/g, "").trim()).filter(Boolean);
+        return Array.from(new Set(cleaned)).sort((a, b) => parseFloat(a) - parseFloat(b));
+      }
+    }
+  }
+
+  // 2. Tìm khu vực dữ kiện (Fact-Check Contract / Dữ kiện / Số liệu / Constraints)
+  const factSectionRegex = /##+\s*(?:\d+\.?\s*)?(?:FACT-CHECK|DỮ KIỆN|SỐ LIỆU|CONSTRAINTS)[\s\S]*?(?=\n##+|$)/i;
+  const factSectionMatch = briefContent.match(factSectionRegex);
+
+  const textToScan = factSectionMatch ? factSectionMatch[0] : briefContent;
+
+  // 3. Làm sạch văn bản trước khi quét:
+  // - Bỏ các số thứ tự đầu dòng ("1. ", "12. ")
+  // - Bỏ tên file ("scene_01.jpg", "shot_12.mp4")
+  // - Bỏ nhãn Shot / Cảnh ("Shot 01–12", "Cảnh 12")
+  // - Bỏ số đề mục ("## 2.")
+  const sanitized = textToScan
+    .replace(/^\s*\d+\.\s+/gm, " ") // Bỏ số thứ tự danh mục
+    .replace(/\b(?:scene|shot)_\d+\.[a-z0-9]+/gi, " ") // Bỏ tên file có số
+    .replace(/\b(?:Shot|Cảnh|Scene)\s+\d+(?:[–-]\d+)?\b/gi, " ") // Bỏ "Shot 01–12"
+    .replace(/##+\s*\d+\.?/g, " "); // Bỏ số thứ tự đề mục
+
+  const numbersFound = sanitized.match(/\b\d+(\.\d+)?\b/g) || [];
+  return Array.from(new Set(numbersFound)).sort((a, b) => parseFloat(a) - parseFloat(b));
+}
+
 export function auditAndEnrichBrief(slug: string, targetDurationSec = 120): AuditResult {
   console.log(`\n======================================================`);
   console.log(`🧐 [BƯỚC 0.1] CỔNG THẨM ĐỊNH & LÀM GIÀU BRIEF: ${slug}`);
@@ -62,9 +107,7 @@ export function auditAndEnrichBrief(slug: string, targetDurationSec = 120): Audi
   }
 
   // 2. Trích xuất Hợp đồng Dữ kiện (Fact-Check Contract)
-  // Chỉ thu thập các con số thực sự được đề cập trong brief gốc
-  const numbersFound = briefContent.match(/\b\d+(\.\d+)?\b/g) || [];
-  const allowedNumbers = Array.from(new Set(numbersFound)).sort((a, b) => parseFloat(a) - parseFloat(b));
+  const allowedNumbers = extractAllowedNumbersFromBrief(briefContent);
   console.log(`🔢 Hợp đồng Dữ kiện (Allowed Numbers): [${allowedNumbers.join(", ")}]`);
 
   // 3. Đánh giá độ dài và độ phong phú của brief
