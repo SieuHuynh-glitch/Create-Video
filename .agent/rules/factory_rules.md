@@ -32,3 +32,11 @@ Quy tắc này bắt buộc áp dụng đối với tất cả các tác vụ ch
 - **Không dùng media thiếu thông tin giấy phép:** Mọi hình ảnh và cảnh quay video thật đưa vào hệ thống bắt buộc phải có thông tin nguồn gốc (`source`), giấy phép (`license`) và tác giả ghi công (`attribution`). Tất cả phải được kiểm định và lập hồ sơ minh bạch trong `runs/<slug>/manifest.json`.
 - **Cảnh chưa có media bắt buộc dùng Placeholder:** Nếu một cảnh yêu cầu media nhưng chưa có file thực tế, hệ thống bắt buộc hiển thị visual placeholder chuẩn và ghi rõ cảnh báo trong `status.md`.
 - **Tuyệt đối không tự ý tải media từ nguồn khác:** Agent không được phép tự động cào, tải ảnh hoặc clip ngầm từ các website hoặc dịch vụ thứ ba khi chưa có sự kiểm duyệt và phê duyệt của người dùng.
+
+## 9. Quy chuẩn Dữ liệu Tương thích Chéo Nền tảng (Cross-Platform Invariance)
+- **Cấm đường dẫn tuyệt đối:** Tuyệt đối không ghi đường dẫn tuyệt đối của máy trạm Windows (`D:\...`, `C:\...`) vào các file dữ liệu trung gian (`jobs/pending/*.json`, `timeline.json`, `manifest.json`). Tất cả phải dùng đường dẫn tương đối dạng POSIX (`runs/<slug>/media/<filename>.jpg`).
+- **Kiểm định Gitignore trước khi gọi Cloud Runner:** Khi tạo tác vụ chạy trên máy ảo đám mây (Google Colab), bắt buộc kiểm tra xem các ảnh mẫu, media đầu vào có bị `.gitignore` chặn hay không (`git ls-files`). Nếu có, phải cấu hình ngoại lệ (`!runs/<slug>/media/*.jpg`) và push lên Git trước khi kích hoạt worker.
+
+## 10. Quy chuẩn An toàn Dòng lệnh Windows PowerShell
+- **Toán tử lệnh:** Không dùng `&&` trong PowerShell (sử dụng dấu chấm phẩy `;`).
+- **Ký tự đặc biệt trong URL:** Khi mở URL có chứa tham số truy vấn hoặc hash chứa ký tự `&` (ví dụ `#mcpProxyToken=...&mcpProxyPort=...`), bắt buộc phải bọc trong dấu nháy đơn `'...'` hoặc sử dụng `Start-Process msedge -ArgumentList '...'` để tránh bị cắt cụt lệnh.

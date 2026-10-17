@@ -128,6 +128,21 @@ shot_01,2026-10-16T16:00:00Z,5.42,4.81,42.5,Level_1,SUCCESS,svd-xt
 ### Điều 10: Quy tắc bất biến (Immutability Rule)
 Tuyệt đối không đổi mô hình hoặc tăng độ phân giải/số khung hình khi chưa có kết quả `memory_log.csv` đạt chuẩn an toàn từ clip thử nghiệm.
 
+### Điều 11: Lớp bọc bảo vệ khi Offload Text Encoder (Diffusers Shim)
+Khi áp dụng chiến lược 2 pha để tiết kiệm RAM (Pha 1 nạp T5 mã hóa prompt ra file, Pha 2 nạp Transformer với `text_encoder=None`):
+- **Bẫy lỗi:** Thư viện `diffusers` vẫn kiểm tra thuộc tính `self.text_encoder.dtype` và `self.tokenizer` ngầm trong quá trình pipeline thực thi, dẫn đến crash `'NoneType' object has no attribute 'dtype'`.
+- **Giải pháp bắt buộc:** Gắn các lớp giả lập nhẹ (Mock Shim - 0MB overhead) ngay sau khi khởi tạo pipeline:
+```python
+if getattr(pipe, "text_encoder", None) is None:
+    class MockTextEncoder:
+        dtype = torch.float16
+        device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    pipe.text_encoder = MockTextEncoder()
+
+if getattr(pipe, "tokenizer", None) is None:
+    pipe.tokenizer = type("MockTokenizer", (), {"model_max_length": 128})()
+```
+
 ---
 
 ## 2. Thư viện triển khai mẫu (Reference Implementation)
