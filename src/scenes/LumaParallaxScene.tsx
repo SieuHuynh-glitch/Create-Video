@@ -137,6 +137,21 @@ export const LumaParallaxScene: React.FC<LumaParallaxSceneProps> = ({
         }}
       />
 
+      {/* SVG DEFINITION: SMOOTHSTEP LUMA KEY FILTER (dải 235-252 khử viền răng cưa) */}
+      <svg style={{ position: "absolute", width: 0, height: 0, pointerEvents: "none" }}>
+        <defs>
+          <filter id="smoothstep-luma-key" colorInterpolationFilters="sRGB">
+            <feColorMatrix
+              type="matrix"
+              values="0.299 0.587 0.114 0 0
+                      0.299 0.587 0.114 0 0
+                      0.299 0.587 0.114 0 0
+                      -15.0 -15.0 -15.0 1 14.2"
+            />
+          </filter>
+        </defs>
+      </svg>
+
       {/* LỚP 2: BÓNG MỜ CHỦ THỂ (BACKGROUND SHADOW AURA - TÁCH LỚP 2.5D) */}
       {hasImage && (
         <div
@@ -167,7 +182,7 @@ export const LumaParallaxScene: React.FC<LumaParallaxSceneProps> = ({
         </div>
       )}
 
-      {/* LỚP 3: CHỦ THỂ NGHỆ THUẬT MỰC ĐEN - LUMA ALPHA MATTING VIA MULTIPLY */}
+      {/* LỚP 3: CHỦ THỂ NGHỆ THUẬT MỰC ĐEN - LUMA ALPHA MATTING & MULTIPLY */}
       {hasImage ? (
         <div
           style={{
@@ -181,7 +196,7 @@ export const LumaParallaxScene: React.FC<LumaParallaxSceneProps> = ({
             justifyContent: "center",
             transform: `scale(${finalScale}) translate(${translateX}px, ${finalTranslateY}px)`,
             transformOrigin: "center center",
-            mixBlendMode: "multiply", // Tách lớp tuyệt đối: giữ mực đen, làm trong suốt nền #FFFFFF
+            mixBlendMode: "multiply", // Khử viền trắng tuyệt đối: giữ mực đen, đồng hóa nền #FFFFFF
           }}
         >
           <Img
@@ -190,7 +205,7 @@ export const LumaParallaxScene: React.FC<LumaParallaxSceneProps> = ({
               maxHeight: "90%",
               maxWidth: "90%",
               objectFit: "contain",
-              filter: "contrast(106%) brightness(98%)",
+              filter: "contrast(105%) brightness(99%)",
             }}
           />
         </div>
