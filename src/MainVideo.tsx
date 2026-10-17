@@ -236,7 +236,7 @@ export const MainVideo: React.FC<MainVideoProps> = ({
 
             {/* Transition Whoosh SFX cho các cảnh chuyển tiếp (chỉ bật khi không phải instrumental) */}
             {!isInstrumentalVideo && idx > 0 ? (
-              <Sequence from={0} durationInFrames={20}>
+              <Sequence durationInFrames={20}>
                 <Audio
                   src={staticFile("system-audio/sfx_whoosh.wav")}
                   volume={0.15}
