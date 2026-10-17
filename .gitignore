@@ -18,3 +18,5 @@ runs/*/media/*.png
 out/
 .tempmediaStorage/
 .system_generated/
+file-ngoai/
+scratch/
