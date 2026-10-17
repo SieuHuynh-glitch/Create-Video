@@ -172,7 +172,7 @@ def phase_2_render_clips(jobs, cache_dir: Path, done_dir: Path, failed_dir: Path
         shot_id = job.get("shotId")
         out_video_name = f"{shot_id}.mp4"
         final_video_path = done_dir / out_video_name
-        tmp_video_path = done_dir / f"{shot_id}.mp4.tmp"
+        tmp_video_path = done_dir / f"tmp_{shot_id}.mp4"
 
         if final_video_path.exists() and final_video_path.stat().st_size > 1024:
             print(f"\n⏭️ [{idx+1}/{len(jobs)}] {shot_id} đã hoàn thành, bỏ qua.")
