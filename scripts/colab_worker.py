@@ -140,11 +140,13 @@ def phase_2_render_clips(jobs, cache_dir: Path, done_dir: Path, failed_dir: Path
     model_id = "Lightricks/LTX-Video"
 
     try:
+        print(f"   ⏳ Đang nạp Tokenizer từ {model_id}...")
+        tokenizer = T5Tokenizer.from_pretrained(model_id, subfolder="tokenizer")
         print(f"   ⏳ Đang nạp LTXImageToVideoPipeline từ {model_id} (text_encoder=None)...")
         pipe = LTXImageToVideoPipeline.from_pretrained(
             model_id,
             text_encoder=None,
-            tokenizer=None,
+            tokenizer=tokenizer,
             torch_dtype=torch.float16
         )
     except Exception as err:
@@ -152,14 +154,17 @@ def phase_2_render_clips(jobs, cache_dir: Path, done_dir: Path, failed_dir: Path
         return False
 
     if getattr(pipe, "text_encoder", None) is None:
-        class MockTextEncoder:
-            dtype = torch.float16
-            device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        class MockTextEncoder(torch.nn.Module):
+            def __init__(self):
+                super().__init__()
+                self.dtype = torch.float16
+                self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+            def forward(self, input_ids=None, attention_mask=None, **kwargs):
+                b = input_ids.shape[0] if input_ids is not None else 1
+                l = input_ids.shape[1] if input_ids is not None else 128
+                return [torch.zeros((b, l, 4096), dtype=self.dtype, device=self.device)]
         pipe.text_encoder = MockTextEncoder()
-        print("   🛡️ Đã gắn MockTextEncoder (khắc phục lỗi NoneType dtype của diffusers)")
-
-    if getattr(pipe, "tokenizer", None) is None:
-        pipe.tokenizer = type("MockTokenizer", (), {"model_max_length": 128})()
+        print("   🛡️ Đã gắn MockTextEncoder (torch.nn.Module callable)")
 
     # Thang cấu hình colab-gpu-guard
     print("   🛡️ Kích hoạt colab-gpu-guard memory ladder:")
@@ -226,6 +231,15 @@ def phase_2_render_clips(jobs, cache_dir: Path, done_dir: Path, failed_dir: Path
         prompt_embeds = embed_data["prompt_embeds"].to(pipe.device, dtype=torch.float16)
         prompt_attention_mask = embed_data["prompt_attention_mask"].to(pipe.device)
 
+        # Chuẩn bị negative embeddings (ngăn chặn diffusers gọi encoder nội bộ)
+        neg_prompt_embeds = embed_data.get("negative_prompt_embeds")
+        if neg_prompt_embeds is not None:
+            neg_prompt_embeds = neg_prompt_embeds.to(pipe.device, dtype=torch.float16)
+            neg_prompt_attention_mask = embed_data["negative_prompt_attention_mask"].to(pipe.device)
+        else:
+            neg_prompt_embeds = torch.zeros_like(prompt_embeds)
+            neg_prompt_attention_mask = torch.zeros_like(prompt_attention_mask)
+
         seed = job.get("seed", 42)
         generator = torch.Generator(device="cuda" if torch.cuda.is_available() else "cpu").manual_seed(seed)
 
@@ -236,6 +250,8 @@ def phase_2_render_clips(jobs, cache_dir: Path, done_dir: Path, failed_dir: Path
                     image=init_image,
                     prompt_embeds=prompt_embeds,
                     prompt_attention_mask=prompt_attention_mask,
+                    negative_prompt_embeds=neg_prompt_embeds,
+                    negative_prompt_attention_mask=neg_prompt_attention_mask,
                     width=704,
                     height=384,
                     num_frames=job.get("numFrames", 49),
