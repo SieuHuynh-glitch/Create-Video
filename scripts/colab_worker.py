@@ -153,32 +153,15 @@ def phase_2_render_clips(jobs, cache_dir: Path, done_dir: Path, failed_dir: Path
         print(f"   ❌ Lỗi nạp pipeline: {err}")
         return False
 
-    if getattr(pipe, "text_encoder", None) is None:
-        class MockTextEncoder(torch.nn.Module):
-            def __init__(self):
-                super().__init__()
-                self.dtype = torch.float16
-                self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-            def forward(self, input_ids=None, attention_mask=None, **kwargs):
-                b = input_ids.shape[0] if input_ids is not None else 1
-                l = input_ids.shape[1] if input_ids is not None else 128
-                return [torch.zeros((b, l, 4096), dtype=self.dtype, device=self.device)]
-        pipe.text_encoder = MockTextEncoder()
-        print("   🛡️ Đã gắn MockTextEncoder (torch.nn.Module callable)")
-
-    # Thang cấu hình colab-gpu-guard
-    print("   🛡️ Kích hoạt colab-gpu-guard memory ladder:")
-    try:
-        pipe.enable_model_cpu_offload()
-        print("   - enable_model_cpu_offload(): ✅ BẬT")
-    except Exception as off_err:
-        print(f"   - Không thể offload: {off_err}")
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    print(f"   🚀 Chuyển pipeline lên GPU {device} (Float16 ~4.2GB VRAM, Tesla T4 có 14.5GB)...")
+    pipe.to(device)
 
     if hasattr(pipe, "vae") and pipe.vae is not None:
         try:
             pipe.vae.enable_tiling()
             pipe.vae.enable_slicing()
-            print("   - VAE tiling & slicing: ✅ BẬT")
+            print("   - VAE tiling & slicing: ✅ BẬT (bảo vệ VRAM)")
         except Exception:
             pass
 
@@ -226,16 +209,17 @@ def phase_2_render_clips(jobs, cache_dir: Path, done_dir: Path, failed_dir: Path
         init_image = load_image(str(source_image_path))
         init_image = resize_to_704x384(init_image)
 
-        # Nạp embedding
-        embed_data = torch.load(embed_file, map_location="cuda" if torch.cuda.is_available() else "cpu")
-        prompt_embeds = embed_data["prompt_embeds"].to(pipe.device, dtype=torch.float16)
-        prompt_attention_mask = embed_data["prompt_attention_mask"].to(pipe.device)
+        # Nạp embedding lên cùng thiết bị GPU
+        device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        embed_data = torch.load(embed_file, map_location=device)
+        prompt_embeds = embed_data["prompt_embeds"].to(device, dtype=torch.float16)
+        prompt_attention_mask = embed_data["prompt_attention_mask"].bool().to(device)
 
         # Chuẩn bị negative embeddings (ngăn chặn diffusers gọi encoder nội bộ)
         neg_prompt_embeds = embed_data.get("negative_prompt_embeds")
         if neg_prompt_embeds is not None:
-            neg_prompt_embeds = neg_prompt_embeds.to(pipe.device, dtype=torch.float16)
-            neg_prompt_attention_mask = embed_data["negative_prompt_attention_mask"].to(pipe.device)
+            neg_prompt_embeds = neg_prompt_embeds.to(device, dtype=torch.float16)
+            neg_prompt_attention_mask = embed_data["negative_prompt_attention_mask"].bool().to(device)
         else:
             neg_prompt_embeds = torch.zeros_like(prompt_embeds)
             neg_prompt_attention_mask = torch.zeros_like(prompt_attention_mask)
@@ -295,7 +279,9 @@ def phase_2_render_clips(jobs, cache_dir: Path, done_dir: Path, failed_dir: Path
             gc.collect()
             torch.cuda.empty_cache()
         except Exception as gen_err:
-            print(f"   ❌ Lỗi khi sinh video: {gen_err}")
+            import traceback
+            print(f"   ❌ Lỗi khi sinh video ({type(gen_err).__name__}): {gen_err}")
+            traceback.print_exc()
             if tmp_video_path.exists():
                 tmp_video_path.unlink()
 
