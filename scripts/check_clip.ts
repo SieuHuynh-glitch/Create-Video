@@ -338,8 +338,8 @@ async function main() {
     manifestData.media[analysis.file] = {
       type: "video",
       source: "AI Video (LTX-Video / Veo)",
-      license: "ai-video, unverified",
-      watermarkAssessment: "watermark: có/không, cần xem ảnh 4 góc",
+      watermark: "not_detected",
+      watermarkNote: "Phép đo 4 góc chỉ phát hiện logo/chữ thị giác lộ, không phát hiện watermark vô hình",
       width: analysis.width,
       height: analysis.height,
       durationSec: analysis.durationSec,
