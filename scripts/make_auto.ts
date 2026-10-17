@@ -4,15 +4,21 @@ import { execSync } from "child_process";
 import { generateAutoPlan } from "./auto_plan";
 import { auditAndEnrichBrief } from "./audit_input";
 import { expandReferences } from "./expand_references";
+import { createDirectorySnapshot, verifyDirectorySnapshot, safeWriteFile } from "./safe_fs";
 
 export async function runMakeAuto(slug: string, targetDurationSec: number = 120) {
   const startTime = Date.now();
   console.log(`\n======================================================`);
-  console.log(`🏭 KHỞI ĐỘNG NHÀ MÁY SẢN XUẤT VIDEO TỰ ĐỘNG (AUTO MODE V4.1)`);
+  console.log(`🏭 KHỞI ĐỘNG NHÀ MÁY SẢN XUẤT VIDEO TỰ ĐỘNG (AUTO MODE V4.2)`);
   console.log(`📁 Dự án (Slug): ${slug}`);
   console.log(`⏱️ Thời lượng: ${targetDurationSec}s`);
   console.log(`⚡ Chế độ: Hoàn toàn tự động - Không có điểm dừng chờ`);
   console.log(`======================================================\n`);
+
+  // BƯỚC KHỞI ĐỘNG: LẬP BẢN CHỤP BẢO VỆ BẤT BIẾN THƯ MỤC INPUTS
+  const inputDir = path.join("inputs", slug);
+  const inputSnapshot = createDirectorySnapshot(inputDir);
+  console.log(`🛡️ [Guard] Đã kích hoạt Checksum Guard bảo vệ bất biến inputs/${slug}/ (${inputSnapshot.size} tệp gốc)...`);
 
   // BƯỚC 0: CỔNG THẨM ĐỊNH & LÀM GIÀU ĐẦU VÀO (PREFLIGHT AUDIT & EXPANSION)
   console.log(`🧐 [0.1/5] Thẩm định chế độ âm thanh & làm giàu kịch bản...`);
@@ -160,6 +166,18 @@ Nếu muốn chuyển các shot từ Tầng 0 lên Tầng 2 (Sinh clip động A
 
   fs.writeFileSync(path.join(rootOutDir, "status.json"), JSON.stringify(statusPayload, null, 2), "utf-8");
   fs.writeFileSync(path.join(runDir, "status.json"), JSON.stringify(statusPayload, null, 2), "utf-8");
+
+  // KIỂM TRA ĐỐI SOÁT TÍNH BẤT BIẾN INPUTS TRƯỚC KHI HOÀN TẤT
+  const snapshotCheck = verifyDirectorySnapshot(inputDir, inputSnapshot);
+  if (!snapshotCheck.valid) {
+    console.error(`\n🚨 [FATAL ERROR: VI PHẠM BẢO VỆ ĐẦU VÀO] Thư mục inputs/${slug}/ đã bị thay đổi trong quá trình chạy!`);
+    if (snapshotCheck.modified.length > 0) console.error(`   - Tệp bị sửa đổi: ${snapshotCheck.modified.join(", ")}`);
+    if (snapshotCheck.added.length > 0) console.error(`   - Tệp mới bị tạo trong inputs: ${snapshotCheck.added.join(", ")}`);
+    if (snapshotCheck.deleted.length > 0) console.error(`   - Tệp bị xóa: ${snapshotCheck.deleted.join(", ")}`);
+    console.error(`   👉 HƯỚNG DẪN KHÔI PHỤC: Tuyệt đối KHÔNG chạy 'git checkout --' để tránh xóa mất các chỉnh sửa chưa commit của bạn!`);
+    throw new Error(`Bảo vệ tính bất biến của inputs/${slug}/ thất bại!`);
+  }
+  console.log(`🛡️ [Guard] Xác minh hoàn tất: Toàn bộ ${inputSnapshot.size} tệp trong inputs/${slug}/ được bảo toàn nguyên vẹn!`);
 
   console.log(`\n======================================================`);
   console.log(`🎉 [5/5] AUTO MODE HOÀN TẤT XUẤT XƯỞNG THÀNH CÔNG!`);

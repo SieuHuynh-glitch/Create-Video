@@ -189,7 +189,29 @@ async function main() {
 - **Kiểm định lúc:** ${new Date().toLocaleString("vi-VN")}
 `;
     fs.appendFileSync(statusPath, audioReport, "utf-8");
-    console.log(`📄 Đã cập nhật biên bản âm thanh vào: ${statusPath}`);
+  }
+
+  // Ghi log đầy đủ vào runs/<slug>/logs/audio_qa.log
+  const logsDir = path.join("runs", slug, "logs");
+  if (!fs.existsSync(logsDir)) {
+    fs.mkdirSync(logsDir, { recursive: true });
+  }
+  const fullLog = `Audio QA Report for ${slug}\nFile: ${targetFile}\nStatus: ${result.status}\nIntegrated Loudness: ${result.integratedLoudness} LUFS\nTrue Peak: ${result.truePeak} dBFS\nLRA: ${result.loudnessRange}\nSummary: ${result.summary}\nDate: ${new Date().toISOString()}\n`;
+  fs.writeFileSync(path.join(logsDir, "audio_qa.log"), fullLog, "utf-8");
+
+  const jsonSummary = {
+    gate: "audio_qa",
+    slug,
+    status: result.status,
+    integratedLoudness: result.integratedLoudness,
+    truePeak: result.truePeak,
+    summary: result.summary,
+  };
+
+  // In 1 dòng JSON tóm tắt duy nhất ra stdout nếu có cờ --json
+  if (process.argv.includes("--json")) {
+    console.log(JSON.stringify(jsonSummary));
+    process.exit(result.status === "FAILED" ? 1 : 0);
   }
 
   console.log(`======================================================`);

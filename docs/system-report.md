@@ -268,14 +268,6 @@ Nhà máy đã trải qua 3 đợt kiểm thử thực tế độc lập:
   - Cảnh 2 (`image`): Dùng ảnh anime girl người dùng upload (`media_1792075574484.jpg`, 1024x1024).
   - Cảnh 3 (`video`): Dùng video clip Full HD 1080p @ 30fps.
 - **Kết quả thực thi:**
-  - **Cổng 1 (Storyboard):** PASSED (3 cảnh, 54 từ).
-### 4.2. Đợt 2: Media Smoke Test Đa Phương Tiện (`runs/media-smoke-test/`)
-- **Mục tiêu:** Kiểm tra toàn diện tính năng mới: `ImageScene` (với ảnh anime girl người dùng cung cấp), `VideoScene` (với clip chuyển động Full HD), `shot-list.md`, `check_media.ts`, và `manifest.json`.
-- **Dữ liệu đầu vào thực tế:**
-  - Cảnh 1 (`title`): Motion graphics mở đầu.
-  - Cảnh 2 (`image`): Dùng ảnh anime girl người dùng upload (`media_1792075574484.jpg`, 1024x1024).
-  - Cảnh 3 (`video`): Dùng video clip Full HD 1080p @ 30fps.
-- **Kết quả thực thi:**
   - **Cổng 1 (Storyboard & Fact-Check):** PASSED. Trích xuất và đối soát 100% con số khớp nguyên văn với `brief.md`.
   - **Cổng Media (check_media):** PASSED. Nhận diện ảnh vuông 1024x1024 với chế độ `fitMode: "contain-blur"`, áp dụng công thức $\min(1920/1024, 1080/1024) \times 1.08 = 1.139\times \le 1.5\times$ (đạt chuẩn an toàn không vỡ hạt; nếu dùng `cover` sẽ là $2.025\times$ và bị loại bỏ), xác thực video clip 15s đạt chuẩn 1080p, xuất hồ sơ bản quyền [manifest.json](file:///d:/project/Create-Video/runs/media-smoke-test/manifest.json).
   - **Voiceover Edge-TTS:** PASSED. Sinh 3 file âm thanh rõ ràng, tự nhiên.
@@ -409,12 +401,12 @@ Toàn bộ hệ thống code và tài liệu đã được cập nhật đồng 
    - Thay thế toàn bộ mô hình slide tĩnh bằng chuỗi 12 shot video chuyển động mượt mà liên tục ($L = 8.0$s, slow-motion playbackRate $0.75\times$, chuyển cảnh chồng lấn tan chảy Melting Cross-Dissolve $o = 1.0$s).
    - Lớp vi hạt khí quyển `<ParticleField />` và âm thanh nền Master Drone liền mạch 120 giây.
 2. **Bộ giải quyết nguồn clip (Clip Resolver 3 cấp):**
-   - **Cấp (a):** Kiểm tra `media/shot_XX.mp4` trên đĩa cục bộ (tạo bằng Veo thủ công). Nếu có -> dùng luôn không gọi API.
-   - **Cấp (b):** Nếu chưa có -> Tải ảnh khung đầu lên Pollinations media storage chính thức và gọi API Pollinations sinh clip tự động.
-   - **Cấp (c):** Nếu lỗi / hết hạn mức -> Tự động đánh dấu `pending` trong `status.md`, không tự ý đổi dịch vụ.
+   - **Tầng 0 (Lõi Remotion CPU):** Chế độ 0đ mặc định, sinh video hoàn chỉnh từ ảnh neo và chuyển động liên tục `ContinuousMetamorphosisScene` hoặc `LumaParallaxScene`.
+   - **Tầng 1 (Direct API Pollinations Video):** Tắt mặc định ở chế độ 0đ (`paid_only: true`, chi phí danh mục ~0.60 Pollen ≈ 15.000đ cho 12 shots, chưa kiểm chứng chất lượng Wan 2.2 Fast). **Lưu ý bảo mật:** Nếu bật Tầng 1 sẽ phát sinh chi phí và ảnh đầu vào sẽ được tải lên `media.pollinations.ai` (như lịch sử 1 ảnh `scene_02_skull.jpg` đã tải lên ở đợt chạy Pilot). Mặc định kích hoạt Fast-Skip 0ms để bảo vệ dữ liệu người dùng.
+   - **Tầng 2 (Colab GPU Worker - LTX-Video):** Tầng sinh video 0đ trên GPU Tesla T4 đám mây độc lập qua hàng đợi `jobs/`.
 3. **Kết quả đo lường Pilot Video API:**
-   - Script thực thi: `scripts/generate_clip.ts` với cơ chế retry exponential backoff và bảo mật tuyệt đối API key qua `.env`.
-   - Kết quả đo đạc chi tiết lưu tại [docs/video-api-benchmark.md](file:///d:/project/Create-Video/docs/video-api-benchmark.md).
+   - Script thực thi: `scripts/generate_clip.ts` với cơ chế Fast-Skip 0ms bảo vệ API key và chống rò rỉ ảnh.
+   - Kết quả đo đạc chi tiết lưu tại [docs/video-api-benchmark.md](file:///d:/project/Create-Video/docs/video-api-benchmark.md) và đối soát tại [docs/STATUS.md](file:///d:/project/Create-Video/docs/STATUS.md).
 
 ---
 

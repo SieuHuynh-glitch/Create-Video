@@ -1,6 +1,7 @@
 import fs from "fs";
 import path from "path";
 import { execSync } from "child_process";
+import { analyzeCornerWatermark } from "./check_watermark";
 
 interface MediaMetadata {
   width: number;
@@ -212,7 +213,13 @@ async function main() {
       attribution = "Pollinations.ai (FLUX.1) - Unverified commercial terms";
     }
 
-    console.log(`   - Nguồn gốc: [${source}] | Giấy phép: [${license}] | Ghi công: [${attribution}]`);
+    // Kiểm định Watermark 4 góc (V4.2 C.5: chỉ gắn cờ, không inpaint)
+    const watermarkResult = !isVideoScene ? analyzeCornerWatermark(fullFilePath) : { watermarkStatus: "unknown" as const, note: "Video clip: cần soi frame đại diện" };
+    if (watermarkResult.watermarkStatus === "suspected") {
+      console.warn(`   ⚠️ [CẢNH BÁO WATERMARK]: Phát hiện góc ảnh có mật độ biến thiên bất thường (WATERMARK_SUSPECTED).`);
+    }
+
+    console.log(`   - Nguồn gốc: [${source}] | Giấy phép: [${license}] | Watermark: [${watermarkResult.watermarkStatus}]`);
 
     manifestAssets.push({
       sceneId: scene.id,
@@ -227,6 +234,8 @@ async function main() {
       source,
       license,
       attribution,
+      watermark: watermarkResult.watermarkStatus,
+      watermarkNote: watermarkResult.note,
       status: hasError ? "FAILED" : "VERIFIED",
     });
 

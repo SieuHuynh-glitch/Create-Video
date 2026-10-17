@@ -13,14 +13,47 @@ interface ShotPlan {
   priority: number; // 1 = highest
 }
 
-const DEFAULT_EASING_SEQUENCE: CameraEase[] = [
-  "zoom_in",
-  "pan_left",
-  "breathing",
-  "zoom_out",
-  "pan_right",
-  "breathing",
-];
+function hashSlugShot(slug: string, shotId: string): number {
+  let hash = 0;
+  const str = `${slug}_${shotId}`;
+  for (let i = 0; i < str.length; i++) {
+    hash = (hash * 31 + str.charCodeAt(i)) >>> 0;
+  }
+  return hash;
+}
+
+/**
+ * PLANNER CHUYỂN ĐỘNG TẤT ĐỊNH THEO NHỊP ĐIỆU (Mở - Cao trào - Khép)
+ * Cấm 2 shot liên tiếp cùng kiểu camera.
+ */
+function getDeterministicCameraEase(
+  slug: string,
+  shotIndex: number,
+  totalShots: number,
+  prevEasing: CameraEase | null
+): CameraEase {
+  const shotId = `shot_${String(shotIndex + 1).padStart(2, "0")}`;
+  const hash = hashSlugShot(slug, shotId);
+  const progress = shotIndex / Math.max(1, totalShots - 1);
+
+  let pool: CameraEase[];
+  if (progress < 0.25) {
+    // Giai đoạn Mở: Chiêm nghiệm, tĩnh tại
+    pool = ["zoom_in", "breathing"];
+  } else if (progress < 0.85) {
+    // Giai đoạn Cao trào / Phát triển: Động lực, chuyển dịch không gian
+    pool = ["pan_left", "pan_right", "zoom_out", "zoom_in"];
+  } else {
+    // Giai đoạn Khép: Hồi quy, lắng đọng
+    pool = ["breathing", "zoom_in"];
+  }
+
+  // Lọc bỏ kiểu camera vừa chạy ở shot liền trước
+  const candidates = pool.filter((e) => e !== prevEasing);
+  const finalPool = candidates.length > 0 ? candidates : pool;
+
+  return finalPool[hash % finalPool.length];
+}
 
 const ENGLISH_PROMPTS_NATURAL_CYCLE: Record<string, string> = {
   skull:
@@ -168,12 +201,14 @@ export function generateAutoPlan(
   const timelineScenes: TimelineScene[] = [];
   const planShots: ShotPlan[] = [];
   let currentStartFrame = 0;
+  let lastEasing: CameraEase | null = null;
 
   for (let i = 0; i < shotCount; i++) {
     const shotId = `shot_${String(i + 1).padStart(2, "0")}`;
     const imageIndex = i % imageFiles.length;
     const chosenImage = imageFiles[imageIndex];
-    const easing = DEFAULT_EASING_SEQUENCE[i % DEFAULT_EASING_SEQUENCE.length];
+    const easing = getDeterministicCameraEase(slug, i, shotCount, lastEasing);
+    lastEasing = easing;
     const prompt = getPromptForImage(chosenImage);
     const seed = 42 + i * 137;
 
