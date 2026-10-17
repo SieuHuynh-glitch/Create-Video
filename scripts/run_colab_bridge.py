@@ -92,11 +92,12 @@ async def main():
         print(f"\n👉 Mở tab Colab (Hãy đảm bảo trình duyệt đang chọn tài khoản protectionZs01@gmail.com):", flush=True)
         print(f"{connect_url}\n", flush=True)
 
-        try:
-            # Mở hoặc kích hoạt Edge
-            subprocess.Popen(["powershell", "-Command", f"Start-Process msedge '{connect_url}'"])
-        except Exception as e:
-            print(f"Lỗi mở Edge: {e}", flush=True)
+        # Không tự động mở Edge đè lên tài khoản người dùng đang chọn
+        if "--open-browser" in sys.argv:
+            try:
+                subprocess.Popen(["powershell", "-Command", f"Start-Process msedge '{connect_url}'"])
+            except Exception as e:
+                print(f"Lỗi mở Edge: {e}", flush=True)
 
         print("⏳ Đang đợi tab Colab trên Edge kết nối lại (chế độ chờ bền bỉ 60 phút)...", flush=True)
         try:
@@ -181,12 +182,11 @@ async def main():
             if cell3_id:
                 print(f"\n▶️ [2/2] ĐANG TỰ BẤM CHẠY Ô 3 (Khởi chạy Worker AI sinh video 12 shot)...", flush=True)
                 try:
-                    # Chạy ô 3
-                    task_run = asyncio.create_task(client.call_tool("run_code_cell", {"cellId": cell3_id}))
-
+                    await client.call_tool("run_code_cell", {"cellId": cell3_id})
                     print("⏳ Đang theo dõi tiến độ sinh 12 clips từ Colab...", flush=True)
-                    while not task_run.done():
-                        await asyncio.sleep(20)
+                    completed = False
+                    for _ in range(360):  # Tối đa 90 phút (15s x 360)
+                        await asyncio.sleep(15)
                         try:
                             check_res = await client.call_tool("get_cells", {"includeOutputs": True})
                             txt = check_res.content[0].text if hasattr(check_res, 'content') and check_res.content else ""
@@ -200,14 +200,16 @@ async def main():
                                             all_out += "".join(o["text"])
                                     lines = [l for l in all_out.strip().split("\n") if l.strip()]
                                     if lines:
-                                        last_few = lines[-3:]
+                                        last_few = lines[-2:]
                                         print(f"⏱️ [{time.strftime('%H:%M:%S')}] Tiến độ: {' | '.join(last_few)}", flush=True)
-                        except Exception as poll_err:
+                                    if "WORKER ĐÃ HOÀN TẤT" in all_out:
+                                        completed = True
+                                        break
+                        except Exception:
                             pass
-
-                    out3 = await task_run
-                    print(f"\n🏁 Ô 3 ĐÃ HOÀN TẤT SINH VIDEO!\n{out3}", flush=True)
-
+                        if completed:
+                            break
+                    print(f"\n🏁 Ô 3 ĐÃ HOÀN TẤT SINH VIDEO!", flush=True)
                 except Exception as e:
                     print(f"⚠️ Lỗi chạy Ô 3: {e}", flush=True)
 
