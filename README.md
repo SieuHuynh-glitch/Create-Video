@@ -51,14 +51,29 @@ Nếu bạn muốn sử dụng tính năng tự động sinh video clip bằng P
 
 ## ☁️ TỰ ĐỘNG SINH 12 CLIP AI MIỄN PHÍ BẰNG GOOGLE COLAB (0đ)
 
-Bạn có thể chạy tự động sinh toàn bộ 12 clip 8 giây bằng GPU Tesla T4 (15GB VRAM) hoàn toàn miễn phí của Google mà không cần cài đặt gì trên máy:
+Dùng GPU Tesla T4 (15GB VRAM) miễn phí của Google, không cần cài gì trên máy:
 
-[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/SieuHuynh-glitch/Create-Video/blob/master/notebooks/free_ai_video_colab.ipynb)
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/SieuHuynh-glitch/Create-Video/blob/master/notebooks/colab_worker.ipynb)
 
-1. Bấm vào nút **Open in Colab** ở trên.
-2. Trên thanh menu Colab, chọn **Runtime** -> **Run all** (hoặc bấm `Ctrl + F9`).
-3. Google Colab sẽ tự động chạy mô hình **Lightricks LTX-Video**, sinh tuần tự đủ 12 shot và nén file `natural-cycle-v2-clips.zip` tải thẳng về máy tính của bạn!
-4. Bạn giải nén và thả 12 file vào `runs/natural-cycle-v2/media/` là xong!
+1. Bấm **Open in Colab**, chọn **Runtime → Change runtime type → T4 GPU**.
+2. Chạy lần lượt các ô **1 → 6** (không dùng "Run all" ở lần đầu).
+3. **Lần đầu nên chạy thử 1 shot:** ở ô 5 điền `ONLY = "shot_01"`. Thấy OK thì để trống để chạy cả hàng đợi.
+4. Ô 6 tự kiểm tra từng clip, nén `<slug>-clips.zip` và tải về máy. Giải nén rồi thả file vào `runs/<slug>/media/`.
+
+Worker (`scripts/colab_worker.py`, mô hình **LTX-Video**) được thiết kế để tự phục hồi:
+
+- Ghi MP4 bằng imageio-ffmpeg (có dự phòng OpenCV), **đọc lại để kiểm tra** và phát hiện video đen/hỏng.
+- Gặp lỗi thì thử lại với seed khác; hết bộ nhớ (OOM) thì tự hạ số khung hình 49 → 33 → 25 và ghi rõ trong báo cáo.
+- Một shot lỗi không làm dừng cả hàng đợi. Lý do lỗi nằm trong `jobs/failed/<slug>/shot_xx.json`; báo cáo tổng hợp ở `jobs/report-<slug>.json`.
+- Shot đã xong được bỏ qua khi chạy lại; nếu gắn Google Drive (ô 3), mỗi clip xong được chép sang Drive ngay.
+- Cache prompt embeddings có hash: sửa prompt thì tự mã hóa lại.
+
+Chạy trực tiếp từ dòng lệnh trên Colab:
+```bash
+python scripts/colab_worker.py --slug natural-cycle --only shot_01      # chạy thử 1 shot
+python scripts/colab_worker.py --slug natural-cycle                      # chạy cả hàng đợi
+python scripts/colab_worker.py --slug natural-cycle --only shot_03 --force   # sinh lại 1 shot
+```
 
 ---
 
