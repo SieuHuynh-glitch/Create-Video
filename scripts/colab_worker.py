@@ -151,6 +151,16 @@ def phase_2_render_clips(jobs, cache_dir: Path, done_dir: Path, failed_dir: Path
         print(f"   ❌ Lỗi nạp pipeline: {err}")
         return False
 
+    if getattr(pipe, "text_encoder", None) is None:
+        class MockTextEncoder:
+            dtype = torch.float16
+            device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        pipe.text_encoder = MockTextEncoder()
+        print("   🛡️ Đã gắn MockTextEncoder (khắc phục lỗi NoneType dtype của diffusers)")
+
+    if getattr(pipe, "tokenizer", None) is None:
+        pipe.tokenizer = type("MockTokenizer", (), {"model_max_length": 128})()
+
     # Thang cấu hình colab-gpu-guard
     print("   🛡️ Kích hoạt colab-gpu-guard memory ladder:")
     try:
