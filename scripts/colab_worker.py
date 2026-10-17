@@ -134,7 +134,7 @@ def phase_1_encode_prompts(jobs, cache_dir: Path):
     print(f"   ✨ RAM khả dụng sau khi dọn T5: {mem_after.get('ram_free_gb')} GB / {mem_after.get('ram_total_gb')} GB")
     return True
 
-def phase_2_render_clips(jobs, cache_dir: Path, done_dir: Path, failed_dir: Path):
+def phase_2_render_clips(jobs, cache_dir: Path, done_dir: Path, failed_dir: Path, root_dir: Path = None, slug: str = "natural-cycle"):
     """Pha 2: Nạp LTX-Video Transformer + VAE (text_encoder=None) và sinh clip"""
     print("\n🎬 [PHA 2/2] NẠP LTX-VIDEO (KHÔNG TEXT ENCODER) & SINH VIDEO")
     model_id = "Lightricks/LTX-Video"
@@ -181,9 +181,25 @@ def phase_2_render_clips(jobs, cache_dir: Path, done_dir: Path, failed_dir: Path
             continue
 
         print(f"\n🚀 [{idx+1}/{len(jobs)}] Đang xử lý job: {shot_id}")
-        source_image_path = Path(job.get("inputImagePath", ""))
-        if not source_image_path.exists():
-            print(f"   ❌ Không tìm thấy ảnh nguồn: {source_image_path}")
+        raw_img_path = str(job.get("inputImagePath", "") or job.get("sourceImage", "")).replace("\\", "/")
+        img_name = Path(raw_img_path).name
+
+        candidate_paths = [
+            Path(raw_img_path),
+            (root_dir / "runs" / slug / "media" / img_name) if root_dir else None,
+            (root_dir / raw_img_path) if root_dir else None,
+            Path("/content/Create-Video/runs") / slug / "media" / img_name,
+            Path("runs") / slug / "media" / img_name,
+        ]
+
+        source_image_path = None
+        for cp in candidate_paths:
+            if cp and Path(cp).exists():
+                source_image_path = Path(cp)
+                break
+
+        if not source_image_path:
+            print(f"   ❌ Không tìm thấy ảnh nguồn: {raw_img_path}")
             continue
 
         embed_file = cache_dir / f"{shot_id}_embeds.pt"
@@ -311,7 +327,7 @@ def main():
     # Chạy quy trình 2 pha
     ok1 = phase_1_encode_prompts(jobs, cache_dir)
     if ok1:
-        phase_2_render_clips(jobs, cache_dir, done_dir, failed_dir)
+        phase_2_render_clips(jobs, cache_dir, done_dir, failed_dir, root_dir, slug)
 
     print("\n🏁 WORKER ĐÃ HOÀN TẤT VÒNG LẶP XỬ LÝ!")
 

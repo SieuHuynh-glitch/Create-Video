@@ -2,7 +2,7 @@
   "slug": "natural-cycle",
   "shotId": "shot_06",
   "sourceImage": "runs/natural-cycle/media/scene_07_tree_growing.jpg",
-  "inputImagePath": "D:\\project\\Create-Video\\runs\\natural-cycle\\media\\scene_07_tree_growing.jpg",
+  "inputImagePath": "runs/natural-cycle/media/scene_07_tree_growing.jpg",
   "prompt": "Surreal monochrome ink drawing on pure white background, ancient tree trunk expanding outwards, twisted branches intertwining like neural networks, fluid continuous growth",
   "seed": 727,
   "model": "Lightricks/LTX-Video",

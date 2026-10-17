@@ -2,7 +2,7 @@
   "slug": "natural-cycle",
   "shotId": "shot_03",
   "sourceImage": "runs/natural-cycle/media/scene_04_soil.jpg",
-  "inputImagePath": "D:\\project\\Create-Video\\runs\\natural-cycle\\media\\scene_04_soil.jpg",
+  "inputImagePath": "runs/natural-cycle/media/scene_04_soil.jpg",
   "prompt": "Surreal monochrome ink illustration on pure white background, skull dissolving into dark organic seeds falling into fertile soil, root fibers emerging, high contrast, smooth motion",
   "seed": 316,
   "model": "Lightricks/LTX-Video",

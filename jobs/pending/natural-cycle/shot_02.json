@@ -2,7 +2,7 @@
   "slug": "natural-cycle",
   "shotId": "shot_02",
   "sourceImage": "runs/natural-cycle/media/scene_03_cracking.jpg",
-  "inputImagePath": "D:\\project\\Create-Video\\runs\\natural-cycle\\media\\scene_03_cracking.jpg",
+  "inputImagePath": "runs/natural-cycle/media/scene_03_cracking.jpg",
   "prompt": "Surreal monochrome black ink art on pure white background, delicate cracks spreading across the forehead of the bone skull, charcoal dust rising, high contrast, continuous fluid transformation",
   "seed": 179,
   "model": "Lightricks/LTX-Video",

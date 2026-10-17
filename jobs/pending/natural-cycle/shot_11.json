@@ -2,7 +2,7 @@
   "slug": "natural-cycle",
   "shotId": "shot_11",
   "sourceImage": "runs/natural-cycle/media/scene_02_skull.jpg",
-  "inputImagePath": "D:\\project\\Create-Video\\runs\\natural-cycle\\media\\scene_02_skull.jpg",
+  "inputImagePath": "runs/natural-cycle/media/scene_02_skull.jpg",
   "prompt": "Surreal monochrome black ink drawing on pure white background, feathery skull awakens with organic feathers swaying gently in wind, high contrast, smooth continuous meditative motion, 24fps",
   "seed": 1412,
   "model": "Lightricks/LTX-Video",

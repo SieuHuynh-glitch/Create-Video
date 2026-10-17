@@ -14,6 +14,7 @@ runs/*/audio/*.vtt
 runs/*/media/*.mp4
 runs/*/media/*.jpg
 runs/*/media/*.png
+!runs/natural-cycle/media/*.jpg
 out/
 .tempmediaStorage/
 .system_generated/

@@ -2,7 +2,7 @@
   "slug": "natural-cycle",
   "shotId": "shot_08",
   "sourceImage": "runs/natural-cycle/media/scene_09_fruit_falling.jpg",
-  "inputImagePath": "D:\\project\\Create-Video\\runs\\natural-cycle\\media\\scene_09_fruit_falling.jpg",
+  "inputImagePath": "runs/natural-cycle/media/scene_09_fruit_falling.jpg",
   "prompt": "Surreal black ink art on pure white background, miniature skull fruit detaching and falling slowly through space, leaves swirling in gentle vortex, smooth slow-motion",
   "seed": 1001,
   "model": "Lightricks/LTX-Video",
