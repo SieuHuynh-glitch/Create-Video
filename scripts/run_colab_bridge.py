@@ -22,16 +22,21 @@ except ImportError:
     ColabWebSocketServer = None  # type: ignore
     ColabProxyClient = None  # type: ignore
 
-TARGET_COLAB_URL = "https://colab.research.google.com/drive/1ngaKgxnDtrgf-cjmjZonq96ecL89p3cb"
+DEFAULT_COLAB_URL = "https://colab.research.google.com/drive/1RfiMJjd0_hgBZtjAR38yOUVTU2EyYk2R"
+TARGET_COLAB_URL = sys.argv[1] if len(sys.argv) > 1 and sys.argv[1].startswith("http") else DEFAULT_COLAB_URL
 FIXED_PORT = 63171
 FIXED_TOKEN = "uTqswYzURvVmqvINBrwESw"
 
-CELL_2_CODE = """# 2. Gắn Google Drive & Tải dữ liệu dự án mới nhất
-from google.colab import drive
+CELL_2_CODE = """# 1 & 2. Cài đặt thư viện & Đồng bộ dự án
+!pip install -q diffusers transformers accelerate sentencepiece protobuf imageio[ffmpeg] opencv-python bitsandbytes psutil
+
+try:
+    from google.colab import drive
+    drive.mount('/content/drive', force_remount=False)
+except Exception:
+    pass
+
 import os
-
-drive.mount('/content/drive')
-
 WORKSPACE_DIR = "/content/Create-Video"
 if not os.path.exists(WORKSPACE_DIR):
     !git clone https://github.com/SieuHuynh-glitch/Create-Video.git {WORKSPACE_DIR}
@@ -81,9 +86,10 @@ async def main():
     async with wss:
         token = wss.token
         port = wss.port
-        connect_url = f"{TARGET_COLAB_URL}?authuser=1#mcpProxyToken={token}&mcpProxyPort={port}"
+        # Không truyền chuỗi email vào query authuser vì Google GAPI chỉ nhận số nguyên (0, 1, 2) hoặc URL sạch
+        connect_url = f"{TARGET_COLAB_URL}#mcpProxyToken={token}&mcpProxyPort={port}"
 
-        print(f"\n👉 Mở tab Colab tự động:", flush=True)
+        print(f"\n👉 Mở tab Colab (Hãy đảm bảo trình duyệt đang chọn tài khoản protectionZs01@gmail.com):", flush=True)
         print(f"{connect_url}\n", flush=True)
 
         try:

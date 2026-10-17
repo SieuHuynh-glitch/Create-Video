@@ -24,3 +24,12 @@
 | **shot_10** | `metamorphosis` | 2842 | 50% | ✅ Đạt | ❌ Rỗng | ✅ Tốt | **PASS** |
 | **shot_11** | `metamorphosis` | 3139 | 50% | ✅ Đạt | ❌ Rỗng | ✅ Tốt | **PASS** |
 | **shot_12** | `metamorphosis` | 3436 | 50% | ✅ Đạt | ✅ Có | ✅ Tốt | **PASS** |
+
+
+### 🔊 CỔNG 4 (AUDIO QA): PASSED
+- **Integrated Loudness:** -16 LUFS
+- **True Peak:** -1 dBFS
+- **Loudness Range:** 5 LU
+- **BGM Ducking:** Đã kích hoạt (hạ âm lượng BGM khi có giọng đọc)
+- **Đánh giá:** Âm thanh đạt chuẩn EBU R128 (-16 LUFS, TP -1 dBFS) cho Web/YouTube
+- **Kiểm định lúc:** 09:27:12 17/10/2026
