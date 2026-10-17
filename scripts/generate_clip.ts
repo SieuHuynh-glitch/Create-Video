@@ -90,6 +90,13 @@ async function fetchAccountBalance(apiKey: string): Promise<any> {
 
 // 4. Tải ảnh lên bộ lưu trữ chính thức của Pollinations (POST https://media.pollinations.ai/upload)
 async function uploadFrameToPollinationsMedia(imagePath: string, apiKey: string): Promise<string> {
+  const allowUpload = process.env.ALLOW_UPLOAD === "1" || process.env.ALLOW_UPLOAD === "true";
+  if (!allowUpload) {
+    throw new Error(
+      `🔒 [BẢO MẬT DỮ LIỆU] Chặn upload: Cờ ALLOW_UPLOAD=1 chưa được kích hoạt. Không được tự ý tải ảnh người dùng lên Pollinations Media Storage!`
+    );
+  }
+
   if (!fs.existsSync(imagePath)) {
     throw new Error(`Ảnh đầu vào không tồn tại: ${imagePath}`);
   }
