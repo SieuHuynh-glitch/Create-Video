@@ -227,15 +227,23 @@ async def main():
 
             # CHỜ FILE ZIP VỀ VÀ TỰ ĐỘNG RENDER MASTER REMOTION
             downloads_dir = Path(os.environ.get("USERPROFILE", "C:/Users/Admin")) / "Downloads"
-            target_zip = downloads_dir / "natural-cycle-done.zip"
-            print(f"\n⏳ Đang đợi file {target_zip} xuất hiện trong Downloads (tối đa 5 phút)...", flush=True)
+            possible_zips = [
+                downloads_dir / "natural-cycle-clips.zip",
+                downloads_dir / "natural-cycle-done.zip"
+            ]
+            print(f"\n⏳ Đang đợi file zip xuất hiện trong Downloads (tối đa 10 phút)...", flush=True)
 
-            for _ in range(60):
-                if target_zip.exists() and target_zip.stat().st_size > 1024:
-                    print(f"🎉 Đã tìm thấy {target_zip}! Bắt đầu giải nén vào jobs/done/natural-cycle/...", flush=True)
+            for _ in range(120):
+                found_zip = None
+                for pz in possible_zips:
+                    if pz.exists() and pz.stat().st_size > 1024:
+                        found_zip = pz
+                        break
+                if found_zip:
+                    print(f"🎉 Đã tìm thấy {found_zip}! Bắt đầu giải nén vào jobs/done/natural-cycle/...", flush=True)
                     dest_dir = Path("jobs/done/natural-cycle")
                     dest_dir.mkdir(parents=True, exist_ok=True)
-                    shutil.unpack_archive(str(target_zip), str(dest_dir))
+                    shutil.unpack_archive(str(found_zip), str(dest_dir))
                     print("✅ Giải nén thành công! Bắt đầu kích hoạt upgrade_auto.ts...", flush=True)
                     subprocess.run(["npx", "tsx", "scripts/upgrade_auto.ts", "natural-cycle"])
                     break
